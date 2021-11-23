@@ -1,6 +1,7 @@
 #include "Jit.hpp"
 #include "Cpu.hpp"
 #include "Bus.hpp"
+#include "Instruction.hpp"
 
 Jit::Jit(Cpu* cpu, Bus* bus){
     this->cpu = cpu;
@@ -11,6 +12,7 @@ Jit::Jit(Cpu* cpu, Bus* bus){
     for(int i=0; i<INSTRUCTION_SIZE; i++){
         this->instructions[i] = NULL;
     }
+    this->instructions[0x78] = new Sei("Sei", 1, 2);
 }
 
 void* Jit::AllocCodeRegion(int size){
@@ -23,11 +25,13 @@ bool Jit::IsCompiledBlock(uint16_t pc){
 
 uint8_t* Jit::CompileBlock(uint16_t pc){
     uint8_t* code;
+    bool stop;
     uint8_t op_code = this->bus->Read8(pc);
     //機械語命令を1つコンパイル
     if(this->instructions[op_code]==NULL){
         this->Error("Not implemented: %02X at Jit::CompileBlock", op_code);
     }
+    this->instructions[op_code]->CompileStep(&code, &stop);
     return NULL;
 }
 

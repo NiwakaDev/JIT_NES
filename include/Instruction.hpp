@@ -11,5 +11,12 @@ class InstructionBase:public Object{
         InstructionBase(string name, int nbytes, int cycles);
         virtual int Execute(Cpu* cpu) = 0;
         int GetCycle();
-        void CompileStep(uint8_t** code);
+        virtual int CompileStep(uint8_t** code, bool* stop) = 0;
+};
+
+class Sei:public InstructionBase{
+    public:
+        Sei(string name, int nbytes, int cycles);
+        int Execute(Cpu* cpu);
+        int CompileStep(uint8_t** code, bool* stop);
 };

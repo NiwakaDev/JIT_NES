@@ -10,9 +10,10 @@ G++_OPTIONS += -lSDL2
 SOURCE_DIR      = ./src/
 INCLUDE_DIR     = ./include/
 
+vpath %.hpp ${INCLUDE_DIR}
 vpath %.cpp ${SOURCE_DIR}
 
-HEADERS = $(wildcard ${SOURCE_DIR}*.hpp)
+HEADERS = $(wildcard ${INCLUDE_DIR}*.hpp)
 SOURCES = $(wildcard ${SOURCE_DIR}*.cpp)
 OBJECTS = ${SOURCES:.cpp=.o}
 WASM_OBJECTS = ${SOURCES:.cpp=.o}
