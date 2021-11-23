@@ -127,3 +127,36 @@ int Txs::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     }
     return 2;
 }
+
+LdaImmediate::LdaImmediate(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
+
+}
+
+int LdaImmediate::Execute(Cpu* cpu){
+    uint8_t value = cpu->Read8(cpu->GetPc());
+    cpu->AddPc(1);
+    cpu->Set8(A_KIND, value);
+    cpu->UpdateNflg(value);
+    cpu->UpdateZflg(value);
+    return this->cycles;
+}
+
+int LdaImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+    uint8_t imm8;
+    *stop = false;
+    if(*code!=NULL){
+        //即値をAレジスタに格納
+        //Aレジスタ:al
+        imm8 = cpu->Read8(cpu->GetPc());
+        cpu->AddPc(1);
+        **code = 0xC6;//MOV RM8, IMM8, MOV AL, IMM8
+        *code++;
+        **code = (uint8_t)this->SetRm8(0x03, 0x00, 0x00);
+        *code++;
+        **code = imm8;
+        *code++;
+        return 3;
+    }
+    cpu->AddPc(1);
+    return 3;
+}

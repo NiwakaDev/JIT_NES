@@ -25,6 +25,7 @@ Jit::Jit(Cpu* cpu, Bus* bus){
     this->instructions[0x78] = new Sei("Sei", 1, 2);
     this->instructions[0x9A] = new Txs("Txs", 1, 2);
     this->instructions[0xA2] = new LdxImmediate("LdxImmediate", 2, 2);
+    this->instructions[0xA9] = new LdaImmediate("LdaImmediate", 2, 2);
 }
 
 void* Jit::AllocCodeRegion(int size){
@@ -38,15 +39,26 @@ bool Jit::IsCompiledBlock(uint16_t pc){
 uint8_t* Jit::CompileBlock(){
     uint8_t* code = NULL;
     bool stop = false;
+    int size = 0;
     while(!stop){
         uint8_t op_code = this->bus->Read8(this->cpu->GetPc());
         this->cpu->AddPc(1);
         if(this->instructions[op_code]==NULL){
             this->Error("Not implemented: 0x%02X at Jit::CompileBlock", op_code);
         }
-        this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
+        size += this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
     }
-    return NULL;
+    code = (uint8_t*)this->AllocCodeRegion(size);
+    //再コンパイル
+    while(!stop){
+        uint8_t op_code = this->bus->Read8(this->cpu->GetPc());
+        this->cpu->AddPc(1);
+        if(this->instructions[op_code]==NULL){
+            this->Error("Not implemented: 0x%02X at Jit::CompileBlock", op_code);
+        }
+        size += this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
+    }
+    return code;
 }
 
 void Jit::Run(){

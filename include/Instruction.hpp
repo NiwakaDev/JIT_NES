@@ -35,3 +35,10 @@ class Txs:public InstructionBase{
         int Execute(Cpu* cpu);
         int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
 };
+
+class LdaImmediate:public InstructionBase{
+    public:
+        LdaImmediate(string name, int nbytes, int cycles);
+        int Execute(Cpu* cpu);
+        int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
+};
