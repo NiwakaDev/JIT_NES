@@ -10,6 +10,7 @@
 #include "Mapper.hpp"
 #include "Mapper0.hpp"
 #include "Mapper3.hpp"
+#include "Jit.hpp"
 #include "Emulator.hpp"
 
 Emulator::Emulator(int argc, char** argv){
@@ -43,6 +44,8 @@ Emulator::Emulator(int argc, char** argv){
     assert(this->bus!=NULL);
     this->cpu = new Cpu(this->bus);
     assert(this->cpu!=NULL);
+    this->jit = new Jit(this->cpu, this->bus);
+    assert(this->jit!=NULL);
 }
 
 void Emulator::Execute(){
@@ -63,6 +66,7 @@ void Emulator::Execute(){
                 this->dma->Execute(this->ppu);
                 cycle = 512;
             }
+            this->jit->Run(this->cpu->GetPc());
             cycle += this->cpu->Execute();
             flg = this->ppu->Execute(cycle*3, this->interrupt_manager);
         }

@@ -2,8 +2,6 @@
 #include "common.hpp"
 #include "Bus.hpp"
 
-enum REGISTER_KIND {A_KIND, X_KIND, Y_KIND, S_KIND, REGISTER_KIND_CNT};
-
 class Cpu;
 class InstructionBase;
 class Gui;

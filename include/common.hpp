@@ -12,11 +12,12 @@ using namespace std;
 #include <mutex>
 #include <vector>
 #include <condition_variable>
-//#include <emscripten.h>
+#include <sys/mman.h>
 #include "Object.hpp"
 #define WIDTH 256
 #define HEIGHT 240
 enum BUTTON_KIND {BUTTON_A_KIND, BUTTON_B_KIND, BUTTON_SELECT_KIND, BUTTON_START_KIND, BUTTON_UP_KIND, BUTTON_DOWN_KIND, BUTTON_LEFT_KIND, BUTTON_RIGHT_KIND, BUTTON_KIND_CNT, NOT_BUTTON_KIND};
+enum REGISTER_KIND {A_KIND, X_KIND, Y_KIND, SP_KIND, REGISTER_KIND_CNT, PC_KIND};
 
 typedef struct _Pixel{
     uint8_t a;

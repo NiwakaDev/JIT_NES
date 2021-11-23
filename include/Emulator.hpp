@@ -11,6 +11,7 @@ class InterruptManager;
 class JoyPad;
 class Mapper;
 class Cpu;
+class Jit;
 
 class Emulator:public Object{
     private:
@@ -24,6 +25,7 @@ class Emulator:public Object{
         Gui* gui = NULL;
         Mapper* mapper = NULL;
         InterruptManager *interrupt_manager = NULL;
+        Jit* jit = NULL;
         thread* emu_thread = NULL;
         int now_cycle = 0;
     public:

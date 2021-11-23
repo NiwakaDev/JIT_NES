@@ -18,7 +18,7 @@ Cpu::Cpu(Bus* bus){
         this->instructions[i] = NULL;
     }
     this->P.raw = 0x24;
-    this->gprs[S_KIND] = 0xFD;
+    this->gprs[SP_KIND] = 0xFD;
     this->gprs[A_KIND] = 0x00;
     this->gprs[X_KIND] = 0x00;
     this->gprs[Y_KIND] = 0x00;
@@ -116,7 +116,7 @@ void Cpu::ShowSelf(){
     fprintf(stderr, "A_REGISTER  : %02X\n", this->gprs[A_KIND]);
     fprintf(stderr, "X_REGISTER  : %02X\n", this->gprs[X_KIND]);
     fprintf(stderr, "Y_REGISTER  : %02X\n", this->gprs[Y_KIND]);
-    fprintf(stderr, "S_REGISTER  : %02X\n", this->gprs[S_KIND]);
+    fprintf(stderr, "S_REGISTER  : %02X\n", this->gprs[SP_KIND]);
     fprintf(stderr, "P_REGISTER  : %02X\n", this->P.raw);
     fprintf(stderr, "PC_REGISTER : %04X\n", this->pc);
 }
@@ -158,43 +158,43 @@ uint8_t Cpu::GetCFLg(){
 }
 
 void Cpu::Push8(uint8_t data){
-    this->Write(((uint16_t)this->gprs[S_KIND])|STACK_BASE_ADDR, data);
-    this->gprs[S_KIND] -= 1;
+    this->Write(((uint16_t)this->gprs[SP_KIND])|STACK_BASE_ADDR, data);
+    this->gprs[SP_KIND] -= 1;
 }
 
 void Cpu::Push16(uint16_t data){
     uint8_t *p = (uint8_t*)&data;
-    //this->Write((((uint16_t)this->gprs[S_KIND])|STACK_BASE_ADDR), *(p+1));//upper byte
-    //this->Write((((uint16_t)this->gprs[S_KIND])|STACK_BASE_ADDR)-1, *p);//lower byte
-    this->Write((((uint16_t)this->gprs[S_KIND])|STACK_BASE_ADDR)-1, data);
-    this->gprs[S_KIND] -= 2;
+    //this->Write((((uint16_t)this->gprs[SP_KIND])|STACK_BASE_ADDR), *(p+1));//upper byte
+    //this->Write((((uint16_t)this->gprs[SP_KIND])|STACK_BASE_ADDR)-1, *p);//lower byte
+    this->Write((((uint16_t)this->gprs[SP_KIND])|STACK_BASE_ADDR)-1, data);
+    this->gprs[SP_KIND] -= 2;
 
     /***
     for(int i=0; i<sizeof(data); i++){
-        this->Write((((uint16_t)this->gprs[S_KIND])|STACK_BASE_ADDR), p[i]);
-        this->gprs[S_KIND]--;
+        this->Write((((uint16_t)this->gprs[SP_KIND])|STACK_BASE_ADDR), p[i]);
+        this->gprs[SP_KIND]--;
     }
     ***/
 }
 
 uint8_t Cpu::Pop8(){
     uint8_t data;
-    this->gprs[S_KIND]++;
-    return this->Read8(((uint16_t)this->gprs[S_KIND])|STACK_BASE_ADDR);
+    this->gprs[SP_KIND]++;
+    return this->Read8(((uint16_t)this->gprs[SP_KIND])|STACK_BASE_ADDR);
 }
 
 uint16_t Cpu::Pop16(){
     uint16_t data;
     uint8_t* p = (uint8_t*)&data;
 
-    *p = this->Read8((((uint16_t)this->gprs[S_KIND])|STACK_BASE_ADDR)+1);//lowwer byte
-    *(p+1) = this->Read8((((uint16_t)this->gprs[S_KIND])|STACK_BASE_ADDR)+2);//upper byte
-    this->gprs[S_KIND] += 2;
+    *p = this->Read8((((uint16_t)this->gprs[SP_KIND])|STACK_BASE_ADDR)+1);//lowwer byte
+    *(p+1) = this->Read8((((uint16_t)this->gprs[SP_KIND])|STACK_BASE_ADDR)+2);//upper byte
+    this->gprs[SP_KIND] += 2;
 
     /***
     for(int i=0; i<sizeof(data); i++){
-        this->gprs[S_KIND]++;
-        *(p+sizeof(data)-1-i) = this->Read8((((uint16_t)this->gprs[S_KIND])|STACK_BASE_ADDR));
+        this->gprs[SP_KIND]++;
+        *(p+sizeof(data)-1-i) = this->Read8((((uint16_t)this->gprs[SP_KIND])|STACK_BASE_ADDR));
     }
     ***/
     return data;

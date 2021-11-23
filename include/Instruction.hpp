@@ -11,4 +11,5 @@ class InstructionBase:public Object{
         InstructionBase(string name, int nbytes, int cycles);
         virtual int Execute(Cpu* cpu) = 0;
         int GetCycle();
+        void CompileStep(uint8_t** code);
 };
