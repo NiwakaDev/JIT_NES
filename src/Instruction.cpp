@@ -160,3 +160,24 @@ int LdaImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     cpu->AddPc(1);
     return 3;
 }
+
+StaZeropage::StaZeropage(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
+
+}
+
+int StaZeropage::Execute(Cpu* cpu){
+    uint8_t value = cpu->Read8(cpu->GetPc());
+    cpu->AddPc(1);
+    cpu->Set8(A_KIND, value);
+    cpu->UpdateNflg(value);
+    cpu->UpdateZflg(value);
+    return this->cycles;
+}
+
+int StaZeropage::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+    *stop = false;
+    if(*code!=NULL){
+        this->Error("Not implemented: %s::CompileStep", this->name.c_str());
+    }
+    this->Error("Not implemented: %s::CompileStep", this->name.c_str());
+}
