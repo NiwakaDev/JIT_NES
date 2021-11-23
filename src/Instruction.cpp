@@ -63,6 +63,7 @@ int Sei::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code++;
         **code = (uint8_t)0x04;
         *code++;
+        return 3;
     }
     return 3;
 }
@@ -87,13 +88,42 @@ int LdxImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         //即値をXレジスタに格納する。
         //NとZフラグの更新も行う
         //x:bl
-        imm8 = 
+        imm8 = cpu->Read8(cpu->GetPc());
+        cpu->AddPc(1);
         **code = 0xC6;//MOV RM8, IMM8, MOV BL, IMM
         *code++;
         **code = (uint8_t)this->SetRm8(0x03, 0x03, 0x00);
         *code++;
-        //**code = 
-        this->Error("Not implemented: *code!=NULL at %s::Run", this->name.c_str());
+        **code = imm8;
+        *code++;
+        return 3;
     }
-    this->Error("Not implemented: *code==NULL at %s::Run", this->name.c_str());
+    cpu->AddPc(1);
+    return 3;
+}
+
+Txs::Txs(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
+
+}
+
+int Txs::Execute(Cpu* cpu){
+    uint8_t x_value = cpu->GetGprValue(X_KIND);
+    cpu->Set8(SP_KIND, x_value);
+    return this->cycles;
+}
+
+int Txs::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+    *stop = false;
+    if(*code!=NULL){
+        //sp:ah
+        //x:bl
+        //xの値をspに保存
+        //MOV AH, BL
+        **code = 0x8A;//MOV R8, RM8
+        *code++;
+        **code = this->SetRm8(0x03, 0x03, 0x04);
+        *code++;
+        return 2;
+    }
+    return 2;
 }

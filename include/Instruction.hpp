@@ -28,3 +28,10 @@ class LdxImmediate:public InstructionBase{
         int Execute(Cpu* cpu);
         int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
 };
+
+class Txs:public InstructionBase{
+    public:
+        Txs(string name, int nbytes, int cycles);
+        int Execute(Cpu* cpu);
+        int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
+};

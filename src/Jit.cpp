@@ -23,6 +23,7 @@ Jit::Jit(Cpu* cpu, Bus* bus){
         this->instructions[i] = NULL;
     }
     this->instructions[0x78] = new Sei("Sei", 1, 2);
+    this->instructions[0x9A] = new Txs("Txs", 1, 2);
     this->instructions[0xA2] = new LdxImmediate("LdxImmediate", 2, 2);
 }
 
