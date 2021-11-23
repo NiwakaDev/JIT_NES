@@ -19,7 +19,7 @@ class Jit:public Object{
         InstructionBase* instructions[INSTRUCTION_SIZE];
     public:
         Jit(Cpu* cpu, Bus* bus);
-        void Run(uint16_t pc);
+        void Run();
         void* AllocCodeRegion(int size);
         /***
         template<typename type>void Write(type data){
@@ -31,6 +31,6 @@ class Jit:public Object{
         ***/
         void Restore(REGISTER_KIND register_kind);
         void ToBinary(const char* file_name);//コード領域をバイナリファイルに保存する
-        uint8_t* CompileBlock(uint16_t pc);
+        uint8_t* CompileBlock();
         bool IsCompiledBlock(uint16_t pc);
 };

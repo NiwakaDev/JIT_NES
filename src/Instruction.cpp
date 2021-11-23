@@ -37,6 +37,12 @@ int InstructionBase::GetCycle(){
     return this->cycles;
 }
 
+uint8_t InstructionBase::SetRm8(uint8_t mod, uint8_t rm, uint8_t reg_idx){
+    uint8_t modrm;
+    modrm = (mod<<6) | rm | (reg_idx<<3);
+    return modrm;
+}
+
 Sei::Sei(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
 
 }
@@ -46,7 +52,7 @@ int Sei::Execute(Cpu* cpu){
     return this->cycles;
 }
 
-int Sei::CompileStep(uint8_t** code, bool* stop){
+int Sei::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     *stop = false;
     if(*code!=NULL){
         //status:cl
@@ -74,9 +80,19 @@ int LdxImmediate::Execute(Cpu* cpu){
     return this->cycles;
 }
 
-int LdxImmediate::CompileStep(uint8_t** code, bool* stop){
+int LdxImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+    uint8_t imm8;
     *stop = false;
     if(*code!=NULL){
+        //即値をXレジスタに格納する。
+        //NとZフラグの更新も行う
+        //x:bl
+        imm8 = 
+        **code = 0xC6;//MOV RM8, IMM8, MOV BL, IMM
+        *code++;
+        **code = (uint8_t)this->SetRm8(0x03, 0x03, 0x00);
+        *code++;
+        //**code = 
         this->Error("Not implemented: *code!=NULL at %s::Run", this->name.c_str());
     }
     this->Error("Not implemented: *code==NULL at %s::Run", this->name.c_str());

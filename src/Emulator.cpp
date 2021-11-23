@@ -66,7 +66,7 @@ void Emulator::Execute(){
                 this->dma->Execute(this->ppu);
                 cycle = 512;
             }
-            this->jit->Run(this->cpu->GetPc());
+            this->jit->Run();
             cycle += this->cpu->Execute();
             flg = this->ppu->Execute(cycle*3, this->interrupt_manager);
         }

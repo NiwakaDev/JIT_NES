@@ -34,26 +34,26 @@ bool Jit::IsCompiledBlock(uint16_t pc){
     return this->pc2code[pc]!=NULL;
 }
 
-uint8_t* Jit::CompileBlock(uint16_t pc){
+uint8_t* Jit::CompileBlock(){
     uint8_t* code = NULL;
     bool stop = false;
     while(!stop){
-        uint8_t op_code = this->bus->Read8(pc);
-        pc++;
+        uint8_t op_code = this->bus->Read8(this->cpu->GetPc());
+        this->cpu->AddPc(1);
         if(this->instructions[op_code]==NULL){
             this->Error("Not implemented: 0x%02X at Jit::CompileBlock", op_code);
         }
-        this->instructions[op_code]->CompileStep(&code, &stop);
+        this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
     }
     return NULL;
 }
 
-void Jit::Run(uint16_t pc){
+void Jit::Run(){
     uint8_t* code = NULL;
-    if(this->IsCompiledBlock(pc)){
-        code = this->pc2code[pc];
+    if(this->IsCompiledBlock(this->cpu->GetPc())){
+        code = this->pc2code[this->cpu->GetPc()];
     }else{
-        code = this->CompileBlock(pc);
+        code = this->CompileBlock();
     }
     void (*func)() = (void (*)()) code;
     func();
