@@ -60,3 +60,24 @@ int Sei::CompileStep(uint8_t** code, bool* stop){
     }
     return 3;
 }
+
+LdxImmediate::LdxImmediate(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
+
+}
+
+int LdxImmediate::Execute(Cpu* cpu){
+    uint8_t value = cpu->Read8(cpu->GetPc());
+    cpu->AddPc(1);
+    cpu->Set8(X_KIND, value);
+    cpu->UpdateNflg(value);
+    cpu->UpdateZflg(value);
+    return this->cycles;
+}
+
+int LdxImmediate::CompileStep(uint8_t** code, bool* stop){
+    *stop = false;
+    if(*code!=NULL){
+        this->Error("Not implemented: *code!=NULL at %s::Run", this->name.c_str());
+    }
+    this->Error("Not implemented: *code==NULL at %s::Run", this->name.c_str());
+}

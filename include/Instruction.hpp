@@ -20,3 +20,10 @@ class Sei:public InstructionBase{
         int Execute(Cpu* cpu);
         int CompileStep(uint8_t** code, bool* stop);
 };
+
+class LdxImmediate:public InstructionBase{
+    public:
+        LdxImmediate(string name, int nbytes, int cycles);
+        int Execute(Cpu* cpu);
+        int CompileStep(uint8_t** code, bool* stop);
+};
