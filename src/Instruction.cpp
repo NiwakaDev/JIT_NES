@@ -27,17 +27,18 @@
         }P;
 ***/
 
-/***
-void WriteCall(Cpu* cpu, uint16_t addr, uint8_t data){
-    printf("Hello\n");
+void WriteCall(Cpu* cpu){
+    cpu->Write(cpu->addr, cpu->data);
 }
-***/
 
+
+/***
 void WriteCall(){
-    for(int i=0; i<100; i++){
+    for(int i=0; i<1; i++){
         fprintf(stderr, "Hello\n");
     }
 }
+***/
 
 InstructionBase::InstructionBase(string name, int nbytes, int cycles){
     this->name = name;
@@ -173,22 +174,25 @@ int LdaImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     return 3;
 }
 
-StaZeropage::StaZeropage(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
+StaAbsolute::StaAbsolute(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
 
 }
 
-int StaZeropage::Execute(Cpu* cpu){
+int StaAbsolute::Execute(Cpu* cpu){
     uint8_t a_value = cpu->GetGprValue(A_KIND);
-    uint16_t addr = 0;
-    addr = cpu->Read8(cpu->GetPc())&0x00FF;
-    cpu->AddPc(1);
+    uint16_t addr;
+    addr = cpu->Read16(cpu->GetPc());
+    cpu->AddPc(2);
     cpu->Write(addr, a_value);
     return this->cycles;
 }
 
-int StaZeropage::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
-    uint16_t addr = cpu->Read8(cpu->GetPc());
-    cpu->AddPc(1);
+int StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+    uint16_t addr = cpu->Read16(cpu->GetPc());
+    uint8_t a_value = cpu->GetGprValue(A_KIND);
+    cpu->data = a_value;
+    cpu->addr = addr;
+    cpu->AddPc(2);
     *stop = true;
     if(*code!=NULL){
         //メモリにAレジスタの値を格納する
@@ -200,11 +204,32 @@ int StaZeropage::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         **code    = 0xB8+6;     //mov esi, imm32
         *code  = *code + 1;
         this->Write(WriteCall, code); //imm32=Function
+
+        **code    = 0x83;        //sub rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xEC;
+        *code  = *code + 1;
+        **code    = 12;
+        *code  = *code + 1;
+
+        **code    = 0x68;       //push imm32
+        *code  = *code + 1;
+        this->Write(cpu, code); //imm32=cpu
+
         **code    = 0xFF;       //call rm32
         *code  = *code + 1;
         **code    = 0xD6;       //rm32=esi
         *code  = *code + 1;
-        return 5;
+
+        //add esp, 4            pushしたcpuを捨てる
+        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xC4;
+        *code  = *code + 1;
+        **code    = 16;
+        *code  = *code + 1;
+
+        return 9+8+10;
     }
-    return 5;
+    return 9+8+10;
 }

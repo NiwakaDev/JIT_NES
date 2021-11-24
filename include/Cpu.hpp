@@ -84,4 +84,7 @@ class Cpu:public Object{
         void HandleNmi(InterruptManager* interrupt_manager);
         bool CmpLastInstructionName(string name);
         void Reset();
+        //以下の2変数は、StaZeropage::CompileStepで起こるバグに対する応急措置
+        uint16_t addr;
+        uint8_t  data;
 };

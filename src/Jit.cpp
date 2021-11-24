@@ -23,10 +23,13 @@ Jit::Jit(Cpu* cpu, Bus* bus){
         this->instructions[i] = NULL;
     }
     this->instructions[0x78] = new Sei("Sei", 1, 2);
-    this->instructions[0x85] = new StaZeropage("StaZeropage", 2, 3);
+    this->instructions[0x8D] = new StaAbsolute("StaAbsolute", 3, 4);
     this->instructions[0x9A] = new Txs("Txs", 1, 2);
     this->instructions[0xA2] = new LdxImmediate("LdxImmediate", 2, 2);
     this->instructions[0xA9] = new LdaImmediate("LdaImmediate", 2, 2);
+    /***
+    this->instructions[0x85] = new StaZeropage("StaZeropage", 2, 3);
+    ***/
 }
 
 void* Jit::AllocCodeRegion(int size){

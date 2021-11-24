@@ -50,9 +50,9 @@ class LdaImmediate:public InstructionBase{
         int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
 };
 
-class StaZeropage:public InstructionBase{
+class StaAbsolute:public InstructionBase{
     public:
-        StaZeropage(string name, int nbytes, int cycles);
+        StaAbsolute(string name, int nbytes, int cycles);
         int Execute(Cpu* cpu);
         int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
 };
