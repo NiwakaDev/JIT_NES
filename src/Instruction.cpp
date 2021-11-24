@@ -192,13 +192,28 @@ int StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     uint16_t addr = cpu->Read16(cpu->GetPc());
     cpu->addr = addr;
     cpu->AddPc(2);
-    *stop = true;
+    *stop = false;
     if(*code!=NULL){
         //メモリにAレジスタの値を格納する
         //Aレジスタ:al
         //MOV EDX, IMM32 (IMM32=buff)
         //LEA ESI, [EDX]+disp32
         //MOV BYTE[ESI], AL
+
+        //cpu->addrにaddrを転送
+        //MOV R32, IMM32 (R32=ESI, IMM32=&cpu->data)
+        **code    = 0xB8+6;     //mov esi, imm32
+        *code  = *code + 1;
+        this->Write(&(cpu->addr), code); //imm32=Function
+
+        //MOV rm16, imm16  (rm16=[ESI], im16=addr)
+        **code = 0x66;
+        *code  = *code + 1;
+        **code = 0xC7;
+        *code = *code + 1;
+        **code = this->SetRm8(0x00, 0x06, 0x00);
+        *code = *code + 1;
+        this->Write(addr, code);
 
         //MOV R32, IMM32 (R32=ESI, IMM32=&cpu->data)
         **code    = 0xB8+6;     //mov esi, imm32
@@ -254,9 +269,9 @@ int StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         **code    = 12;
         *code  = *code + 1;
 
-        return 9+8+10+7;
+        return 9+8+10+7+12;
     }
-    return 9+8+10+7;
+    return 9+8+10+7+12;
 }
 
 LdyImmediate::LdyImmediate(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
@@ -318,19 +333,26 @@ int LdaAbsoluteX::Execute(Cpu* cpu){
 }
 
 int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
-    uint8_t imm8 = cpu->Read8(cpu->GetPc());
-    cpu->AddPc(1);
+    uint16_t addr = cpu->Read16(cpu->GetPc());
+    cpu->AddPc(2);
+    cpu->addr = addr;
     *stop = false;
     if(*code!=NULL){
-        //即値をXレジスタに格納する。
-        //NとZフラグの更新も行う予定
-        //y:bh
-        **code = 0xC6;//MOV RM8, IMM8, MOV BL, IMM
+        //即値2byteをaddrとx_valueを加算した値が示す番地の中身から、1バイトをAレジスタにロードする。
+        //Aレジスタ:al
+        //Xレジスタ:bl
+        //MOV R32, IMM32 (R32=ESI, IMM32=&cpu->data)
+        **code    = 0xB8+6;     //mov esi, imm32
         *code  = *code + 1;
-        **code = (uint8_t)this->SetRm8(0x03, 0x07, 0x00);
-        *code  = *code + 1;
-        **code = imm8;
-        *code  = *code + 1;
+        this->Write(&(cpu->data), code); //imm32=Function
+
+        //MOV rm8, r8  (rm8=[ESI], r8=bl)
+        **code = 0x88;
+        *code = *code + 1;
+        **code = this->SetRm8(0x00, 0x06, 0x03);
+        *code = *code + 1;
+
+        //cpu->addrと
         return 3;
     }
     return 3;
