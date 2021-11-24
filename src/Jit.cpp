@@ -56,7 +56,7 @@ uint8_t* Jit::CompileBlock(){
         }
         size += this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
     }
-    code = (uint8_t*)this->AllocCodeRegion(size+9);
+    code = (uint8_t*)this->AllocCodeRegion(size+10000);
     first_loc = code;
     this->cpu->SetPc(first_pc);
     //再コンパイル
@@ -69,7 +69,33 @@ uint8_t* Jit::CompileBlock(){
     *code    = 12;
     code++;
     stop = false;
-    
+
+    *code = 0xB0;//MOV R8, IMM8
+    code++;
+    *code = this->cpu->GetGprValue(A_KIND);
+    code++;
+    *code = 0xB0+4;//MOV R8, IMM8
+    code++;
+    *code = this->cpu->GetGprValue(SP_KIND);
+    code++;
+    *code = 0xB0+3;//MOV R8, IMM8
+    code++;
+    *code = this->cpu->GetGprValue(X_KIND);
+    code++;
+    *code = 0xB0+7;//MOV R8, IMM8
+    code++;
+    *code = this->cpu->GetGprValue(Y_KIND);
+    code++;
+    *code = 0xB0+1;//MOV R8, IMM8
+    code++;
+    *code = this->cpu->GetP();
+    code++;
+    *code = 0x66;//MOV R16, IMM16
+    code++;
+    *code = 0xB8+7;//MOV R16, IMM16
+    code++;
+    this->Write(this->cpu->GetPc(), &code);
+
     while(!stop){
         uint8_t op_code = this->bus->Read8(this->cpu->GetPc());
         this->cpu->AddPc(1);

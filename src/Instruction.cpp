@@ -28,7 +28,7 @@
 ***/
 
 void WriteCall(Cpu* cpu){
-    fprintf(stderr, "cpu->data = %08X\n", cpu->data);
+    fprintf(stderr, "cpu->addr = %08X, cpu->data = %08X\n", cpu->addr, cpu->data);
     cpu->Write(cpu->addr, cpu->data);
 }
 
@@ -223,16 +223,24 @@ int StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         **code    = 12;
         *code  = *code + 1;
 
+        **code = 0x60;          //pushad
+        *code = *code + 1;
+
         **code    = 0x68;       //push imm32
         *code  = *code + 1;
         this->Write(cpu, code); //imm32=cpu
 
-        **code = 0x60;          //pushad
-        *code = *code + 1;
-
         **code    = 0xFF;       //call rm32
         *code  = *code + 1;
         **code    = 0xD6;       //rm32=esi
+        *code  = *code + 1;
+
+        //add esp, 4            pushしたcpuを捨てる
+        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xC4;
+        *code  = *code + 1;
+        **code    = 4;
         *code  = *code + 1;
 
         **code = 0x61;          //popad
@@ -243,7 +251,7 @@ int StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code    = 0xC4;
         *code  = *code + 1;
-        **code    = 16;
+        **code    = 12;
         *code  = *code + 1;
 
         return 9+8+10+7;

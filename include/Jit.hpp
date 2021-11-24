@@ -21,14 +21,13 @@ class Jit:public Object{
         Jit(Cpu* cpu, Bus* bus);
         void Run();
         void* AllocCodeRegion(int size);
-        /***
-        template<typename type>void Write(type data){
+        template<typename type>void Write(type data, uint8_t** code){
             uint8_t* pointer = (uint8_t*)&data;
             for(int i=0; i<sizeof(data); i++){
-                this->code[this->pc++] = pointer[i];
+                **code = pointer[i];
+                *code  = *code + 1;
             }
         }
-        ***/
         void Restore(REGISTER_KIND register_kind);
         void ToBinary(const char* file_name);//コード領域をバイナリファイルに保存する
         uint8_t* CompileBlock();
