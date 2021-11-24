@@ -28,10 +28,15 @@
 ***/
 
 void WriteCall(Cpu* cpu){
-    fprintf(stderr, "cpu->addr = %08X, cpu->data = %08X\n", cpu->addr, cpu->data);
+    //fprintf(stderr, "cpu->addr = %08X, cpu->data = %08X\n", cpu->addr, cpu->data);
     cpu->Write(cpu->addr, cpu->data);
 }
 
+//とりあえず、READもこれを利用
+void ReadCall8(Cpu* cpu){
+    fprintf(stderr, "cpu->addr = %08X\n", cpu->addr);
+    //return cpu->Read8(cpu->addr);
+}
 
 /***
 void WriteCall(){
@@ -336,24 +341,81 @@ int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     uint16_t addr = cpu->Read16(cpu->GetPc());
     cpu->AddPc(2);
     cpu->addr = addr;
-    *stop = false;
+    *stop = true;
     if(*code!=NULL){
         //即値2byteをaddrとx_valueを加算した値が示す番地の中身から、1バイトをAレジスタにロードする。
         //Aレジスタ:al
         //Xレジスタ:bl
-        //MOV R32, IMM32 (R32=ESI, IMM32=&cpu->data)
+        //空いてるレジスタはEDX, ESI
+        //Xレジスタの値を2byteに符号無し拡張して、dxに転送
+
+        //MOVZX R16, RM8 (R16=DX, RM8=bl)
+        **code = 0x66;
+        *code  = *code + 1;
+        **code = 0x0F;
+        *code  = *code + 1;
+        **code = 0xB6;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x03, 0x02);
+        *code  = *code + 1;
+
+        //MOV R32, IMM32 (R32=ESI, IMM32=&cpu->addr)
+        **code = 0xB8+6;
+        *code  = *code + 1;
+        this->Write(&(cpu->addr), code);
+
+        //ADD RM16, R16  (RM16=[ESI], DX)
+        **code = 0x66;
+        *code  = *code + 1;
+        **code = 0x01;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x00, 0x06, 0x02);
+        *code  = *code + 1;
+
+
+        //書き込みは特別な関数を実行 
         **code    = 0xB8+6;     //mov esi, imm32
         *code  = *code + 1;
-        this->Write(&(cpu->data), code); //imm32=Function
+        this->Write(ReadCall8, code); //imm32=ReadCall8
 
-        //MOV rm8, r8  (rm8=[ESI], r8=bl)
-        **code = 0x88;
-        *code = *code + 1;
-        **code = this->SetRm8(0x00, 0x06, 0x03);
+        **code    = 0x83;        //sub rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xEC;
+        *code  = *code + 1;
+        **code    = 12;
+        *code  = *code + 1;
+
+        **code = 0x60;          //pushad
         *code = *code + 1;
 
-        //cpu->addrと
-        return 3;
+        **code    = 0x68;       //push imm32
+        *code  = *code + 1;
+        this->Write(cpu, code); //imm32=cpu
+
+        **code    = 0xFF;       //call rm32
+        *code  = *code + 1;
+        **code    = 0xD6;       //rm32=esi
+        *code  = *code + 1;
+
+        //add esp, 4            
+        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xC4;
+        *code  = *code + 1;
+        **code    = 4;
+        *code  = *code + 1;
+
+        **code = 0x61;          //popad
+        *code = *code + 1;
+
+        //add esp, 4            
+        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xC4;
+        *code  = *code + 1;
+        **code    = 12;
+        *code  = *code + 1;
+        return 33;
     }
-    return 3;
+    return 33;
 }
