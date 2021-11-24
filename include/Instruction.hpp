@@ -63,3 +63,10 @@ class LdyImmediate:public InstructionBase{
         int Execute(Cpu* cpu);
         int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
 };
+
+class LdaAbsoluteX:public InstructionBase{
+    public:
+        LdaAbsoluteX(string name, int nbytes, int cycles);
+        int Execute(Cpu* cpu);
+        int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
+};

@@ -28,6 +28,7 @@ Jit::Jit(Cpu* cpu, Bus* bus){
     this->instructions[0xA0] = new LdyImmediate("LdyImmediate", 2, 2);
     this->instructions[0xA2] = new LdxImmediate("LdxImmediate", 2, 2);
     this->instructions[0xA9] = new LdaImmediate("LdaImmediate", 2, 2);
+    this->instructions[0xBD] = new LdaAbsoluteX("LdaAbsoluteX", 3, 4);
     /***
     this->instructions[0x85] = new StaZeropage("StaZeropage", 2, 3);
     ***/
