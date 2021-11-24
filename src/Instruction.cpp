@@ -348,7 +348,7 @@ int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         //Xレジスタ:bl
         //空いてるレジスタはEDX, ESI
         //Xレジスタの値を2byteに符号無し拡張して、dxに転送
-
+        
         //MOVZX R16, RM8 (R16=DX, RM8=bl)
         **code = 0x66;
         *code  = *code + 1;
@@ -364,6 +364,15 @@ int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         this->Write(&(cpu->addr), code);
 
+        //MOV rm16, imm16  (rm16=[ESI], im16=addr)
+        **code = 0x66;
+        *code  = *code + 1;
+        **code = 0xC7;
+        *code = *code + 1;
+        **code = this->SetRm8(0x00, 0x06, 0x00);
+        *code = *code + 1;
+        this->Write(addr, code);//cpu->addrの値をaddrに更新
+
         //ADD RM16, R16  (RM16=[ESI], DX)
         **code = 0x66;
         *code  = *code + 1;
@@ -371,7 +380,6 @@ int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code = this->SetRm8(0x00, 0x06, 0x02);
         *code  = *code + 1;
-
 
         //書き込みは特別な関数を実行 
         **code    = 0xB8+6;     //mov esi, imm32
