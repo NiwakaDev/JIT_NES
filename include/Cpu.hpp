@@ -66,6 +66,7 @@ class Cpu:public Object{
                 this->bus->Write8(addr+i, p[i]);
             }
         }
+        void Write8(uint16_t addr, uint8_t value);
         void UpdateNflg(uint8_t value);
         void UpdateZflg(uint8_t value);
         bool IsNflg();

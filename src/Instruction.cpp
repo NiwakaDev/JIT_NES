@@ -27,6 +27,18 @@
         }P;
 ***/
 
+/***
+void WriteCall(Cpu* cpu, uint16_t addr, uint8_t data){
+    printf("Hello\n");
+}
+***/
+
+void WriteCall(){
+    for(int i=0; i<100; i++){
+        fprintf(stderr, "Hello\n");
+    }
+}
+
 InstructionBase::InstructionBase(string name, int nbytes, int cycles){
     this->name = name;
     this->nbytes = nbytes;
@@ -58,11 +70,11 @@ int Sei::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         //status:cl
         //OR CL, 0x04
         **code = 0x80;
-        *code++;
+        *code  = *code + 1;
         **code = 0xC9;
-        *code++;
+        *code  = *code + 1;
         **code = (uint8_t)0x04;
-        *code++;
+        *code  = *code + 1;
         return 3;
     }
     return 3;
@@ -91,11 +103,11 @@ int LdxImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         imm8 = cpu->Read8(cpu->GetPc());
         cpu->AddPc(1);
         **code = 0xC6;//MOV RM8, IMM8, MOV BL, IMM
-        *code++;
+        *code  = *code + 1;
         **code = (uint8_t)this->SetRm8(0x03, 0x03, 0x00);
-        *code++;
+        *code  = *code + 1;
         **code = imm8;
-        *code++;
+        *code  = *code + 1;
         return 3;
     }
     cpu->AddPc(1);
@@ -120,9 +132,9 @@ int Txs::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         //xの値をspに保存
         //MOV AH, BL
         **code = 0x8A;//MOV R8, RM8
-        *code++;
+        *code  = *code + 1;
         **code = this->SetRm8(0x03, 0x03, 0x04);
-        *code++;
+        *code  = *code + 1;
         return 2;
     }
     return 2;
@@ -150,11 +162,11 @@ int LdaImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         imm8 = cpu->Read8(cpu->GetPc());
         cpu->AddPc(1);
         **code = 0xC6;//MOV RM8, IMM8, MOV AL, IMM8
-        *code++;
+        *code  = *code + 1;
         **code = (uint8_t)this->SetRm8(0x03, 0x00, 0x00);
-        *code++;
+        *code  = *code + 1;
         **code = imm8;
-        *code++;
+        *code  = *code + 1;
         return 3;
     }
     cpu->AddPc(1);
@@ -166,18 +178,33 @@ StaZeropage::StaZeropage(string name, int nbytes, int cycles):InstructionBase(na
 }
 
 int StaZeropage::Execute(Cpu* cpu){
-    uint8_t value = cpu->Read8(cpu->GetPc());
+    uint8_t a_value = cpu->GetGprValue(A_KIND);
+    uint16_t addr = 0;
+    addr = cpu->Read8(cpu->GetPc())&0x00FF;
     cpu->AddPc(1);
-    cpu->Set8(A_KIND, value);
-    cpu->UpdateNflg(value);
-    cpu->UpdateZflg(value);
+    cpu->Write(addr, a_value);
     return this->cycles;
 }
 
 int StaZeropage::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
-    *stop = false;
+    uint16_t addr = cpu->Read8(cpu->GetPc());
+    cpu->AddPc(1);
+    *stop = true;
     if(*code!=NULL){
-        this->Error("Not implemented: %s::CompileStep", this->name.c_str());
+        //メモリにAレジスタの値を格納する
+        //Aレジスタ:al
+        //MOV EDX, IMM32 (IMM32=buff)
+        //LEA ESI, [EDX]+disp32
+        //MOV BYTE[ESI], AL
+        //書き込みは特別な関数を実行 
+        **code    = 0xB8+6;     //mov esi, imm32
+        *code  = *code + 1;
+        this->Write(WriteCall, code); //imm32=Function
+        **code    = 0xFF;       //call rm32
+        *code  = *code + 1;
+        **code    = 0xD6;       //rm32=esi
+        *code  = *code + 1;
+        return 5;
     }
-    this->Error("Not implemented: %s::CompileStep", this->name.c_str());
+    return 5;
 }

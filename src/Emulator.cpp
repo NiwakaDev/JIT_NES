@@ -1,5 +1,4 @@
 #include "Dma.hpp"
-#include "Gui.hpp"
 #include "Ppu.hpp"
 #include "Cpu.hpp"
 #include "InesParser.hpp"
@@ -36,9 +35,7 @@ Emulator::Emulator(int argc, char** argv){
     assert(this->memory!=NULL);
     this->dma = new Dma(this->memory);
     assert(this->dma!=NULL);
-    this->gui = new Gui(this->joy_pad);
-    assert(this->gui!=NULL);
-    this->ppu = new Ppu(this->ines_parser, this->gui, this->mapper);
+    this->ppu = new Ppu(this->ines_parser, this->mapper);
     assert(this->ppu!=NULL);
     this->bus = new Bus(this->memory, this->ppu, this->joy_pad, this->dma, this->ines_parser, this->mapper);
     assert(this->bus!=NULL);
@@ -56,25 +53,16 @@ void Emulator::Execute(){
     uint32_t offset;
     const uint32_t DELAY = 16;
     this->cpu->Reset();
-    while(!this->gui->IsQuit()){
-        start = SDL_GetTicks();
-        this->gui->PollEvents();
-        while(!flg){
-            cycle = 0;
-            //JITコンパイラでは、割り込み処理を未実装
-            if(this->dma->IsRunning()){
-                this->dma->Execute(this->ppu);
-                cycle = 512;
-            }
-            this->jit->Run();
-            cycle += this->cpu->Execute();
-            flg = this->ppu->Execute(cycle*3, this->interrupt_manager);
+    for(int i=0; i<1000; i++){
+        cycle = 0;
+        //JITコンパイラでは、割り込み処理を未実装
+        if(this->dma->IsRunning()){
+            this->dma->Execute(this->ppu);
+            cycle = 512;
         }
-        flg = false;
-        offset = SDL_GetTicks() - start;
-        if(DELAY>offset){
-            SDL_Delay(DELAY-offset);
-        }
-        this->gui->Update();
+        this->jit->Run();
+        //cycle += this->cpu->Execute();
+        flg = this->ppu->Execute(cycle*3, this->interrupt_manager);
     }
+    flg = false;
 }

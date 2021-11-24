@@ -7,6 +7,13 @@ class InstructionBase:public Object{
         int nbytes;
         int cycles;
         uint8_t SetRm8(uint8_t mod, uint8_t rm, uint8_t reg_idx);
+        template<typename type>void Write(type data, uint8_t** code){
+            uint8_t* pointer = (uint8_t*)&data;
+            for(int i=0; i<sizeof(data); i++){
+                **code = pointer[i];
+                *code  = *code + 1;
+            }
+        }
     public:
         string name;
         InstructionBase(string name, int nbytes, int cycles);

@@ -1,14 +1,11 @@
 #include "InterruptManager.hpp"
-#include "Gui.hpp"
 #include "InesParser.hpp"
 #include "Mapper.hpp"
 #include "Ppu.hpp"
 
-Ppu::Ppu(InesParser* ines_parser, Gui* gui, Mapper* mapper){
-    this->gui = gui;
+Ppu::Ppu(InesParser* ines_parser, Mapper* mapper){
     this->ines_parser = ines_parser;
     assert(this->ines_parser!=NULL);
-    assert(this->gui!=NULL);
     memcpy(this->vram.pattern_table.raw, this->ines_parser->GetChrRom(), this->ines_parser->GetChrSize());
     this->registers[PPUSTATUS_KIND] = 0x00;
     this->now_cycle = 0;
@@ -27,6 +24,7 @@ Ppu::Ppu(InesParser* ines_parser, Gui* gui, Mapper* mapper){
     this->ResetTransparentBuff();
     this->mapper = mapper;
     assert(this->mapper!=NULL);
+    this->image = (Pixel*)malloc(WIDTH*HEIGHT*sizeof(Pixel));
 }
 
 uint8_t Ppu::Read(PPU_REGISTER_KIND ppu_register_kind){
@@ -224,6 +222,9 @@ bool Ppu::Execute(int cycle, InterruptManager* interrupt_manager){
             this->ClearVblank();
             interrupt_manager->ClearNmi();
             this->line = 0;
+            FILE* fp = fopen("hello_image.img", "wb+");
+            fwrite(this->image, 1, WIDTH*HEIGHT*sizeof(Pixel), fp);
+            fclose(fp);
             return true;
         }
     }
@@ -295,7 +296,7 @@ void Ppu::DrawSprites(){
                     if((((int)sprite_info->x)+dx)>=WIDTH){
                         continue;
                     }
-                    this->gui->SetPixel(sprite_info->x+dx, y, this->palettes[*(((char*)&palette)+this->sprite[dy][dx])]);
+                    this->image[sprite_info->x+dx+y*256] = this->palettes[*(((char*)&palette)+this->sprite[dy][dx])];
                 }
             }
         }
@@ -378,7 +379,7 @@ void Ppu::DrawBg(){
             if(!this->sprite[offset_y][offset_x]){
                this->transparent_buff[y][x] = true;
             }
-            this->gui->SetPixel(x, y, this->palettes[*(((char*)&palette)+this->sprite[offset_y][offset_x])]);
+            this->image[x+y*256] = this->palettes[*(((char*)&palette)+this->sprite[offset_y][offset_x])];
             x++;
         }
     }

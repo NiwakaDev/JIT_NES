@@ -1,15 +1,11 @@
 #pragma once
 #include "common.hpp"
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
 using namespace std;
-
-class JoyPad;
 
 class Gui:public Object{
     private:
         bool quit;
-        JoyPad* joy_pad;
         int SCREEN_WIDTH = WIDTH;
         int SCREEN_HEIGHT = HEIGHT;
         SDL_Window* window = NULL;
@@ -21,7 +17,7 @@ class Gui:public Object{
         bool button_state[BUTTON_KIND_CNT];
         Pixel* image;
     public:
-        Gui(JoyPad* joy_pad);
+        Gui();
         void Update();
         void PollEvents();
         bool IsQuit();

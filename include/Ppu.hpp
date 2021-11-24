@@ -2,7 +2,6 @@
 #include "common.hpp"
 using namespace std;
 class InesParser;
-class Gui;
 class InterruptManager;
 class Mapper;
 
@@ -28,6 +27,7 @@ struct Sprite{
 
 class Ppu:public Object{
     private:
+        Pixel* image;
         uint8_t vram_data_buff;
         bool sprite_enable = false;
         bool bg_enable = false;
@@ -40,7 +40,6 @@ class Ppu:public Object{
         int now_cycle = 0;
         int line = 0;
         InesParser* ines_parser = NULL;
-        Gui* gui = NULL;
         Vram vram;
         Pixel img[61440];//61440=256*240
         union{
@@ -104,7 +103,7 @@ class Ppu:public Object{
             {0xFF, 0xFF, 0xF7, 0x9C}, {0xFF, 0xD7, 0xE8, 0x95}, {0xFF, 0xA6, 0xED, 0xAF}, {0xFF, 0xA2, 0xF2, 0xDA},
             {0xFF, 0x99, 0xFF, 0xFC}, {0xFF, 0xDD, 0xDD, 0xDD}, {0xFF, 0x11, 0x11, 0x11}, {0xFF, 0x11, 0x11, 0x11},
         };
-        Ppu(InesParser* ines_parser, Gui* gui, Mapper* mapper);
+        Ppu(InesParser* ines_parser, Mapper* mapper);
         void Write(PPU_REGISTER_KIND ppu_register_kind, uint8_t value);
         uint8_t Read(PPU_REGISTER_KIND ppu_register_kind);
         uint8_t GetChrIdx(int x, int y);

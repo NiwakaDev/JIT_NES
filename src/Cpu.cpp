@@ -17,6 +17,7 @@ Cpu::Cpu(Bus* bus){
     for(int i=0; i<this->instruction_size; i++){
         this->instructions[i] = NULL;
     }
+
     this->P.raw = 0x24;
     this->gprs[SP_KIND] = 0xFD;
     this->gprs[A_KIND] = 0x00;
@@ -92,6 +93,10 @@ void Cpu::AddPc(uint16_t value){
 
 void Cpu::SetPc(uint16_t value){
     this->pc = value;
+}
+
+void Cpu::Write8(uint16_t addr, uint8_t value){
+    this->bus->Write8(addr, value);
 }
 
 uint8_t Cpu::Read8(uint16_t addr){

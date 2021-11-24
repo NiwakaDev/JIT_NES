@@ -39,6 +39,8 @@ bool Jit::IsCompiledBlock(uint16_t pc){
 
 uint8_t* Jit::CompileBlock(){
     uint8_t* code = NULL;
+    uint8_t* first_loc;
+    uint16_t first_pc = this->cpu->GetPc();
     bool stop = false;
     int size = 0;
     while(!stop){
@@ -49,8 +51,20 @@ uint8_t* Jit::CompileBlock(){
         }
         size += this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
     }
-    code = (uint8_t*)this->AllocCodeRegion(size);
+    code = (uint8_t*)this->AllocCodeRegion(size+9);
+    first_loc = code;
+    this->cpu->SetPc(first_pc);
     //再コンパイル
+    *code          = 0x60;            //pushad
+    code++;
+    *code    = 0x83;            //sub esp, 12
+    code++;
+    *code    = 0xEC;
+    code++;
+    *code    = 12;
+    code++;
+    stop = false;
+    
     while(!stop){
         uint8_t op_code = this->bus->Read8(this->cpu->GetPc());
         this->cpu->AddPc(1);
@@ -59,7 +73,17 @@ uint8_t* Jit::CompileBlock(){
         }
         size += this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
     }
-    return code;
+    *code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
+    code++;
+    *code    = 0xC4;
+    code++;
+    *code    = 12;
+    code++;
+    *code    = 0x61;       //popad
+    code++;
+    *code    = 0xC3;       //ret
+    code++;
+    return first_loc;
 }
 
 void Jit::Run(){
@@ -71,4 +95,5 @@ void Jit::Run(){
     }
     void (*func)() = (void (*)()) code;
     func();
+    exit(1);
 }
