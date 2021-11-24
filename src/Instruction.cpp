@@ -193,7 +193,7 @@ int StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     cpu->data = a_value;
     cpu->addr = addr;
     cpu->AddPc(2);
-    *stop = true;
+    *stop = false;
     if(*code!=NULL){
         //メモリにAレジスタの値を格納する
         //Aレジスタ:al
@@ -232,4 +232,36 @@ int StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         return 9+8+10;
     }
     return 9+8+10;
+}
+
+LdyImmediate::LdyImmediate(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
+
+}
+
+int LdyImmediate::Execute(Cpu* cpu){
+    uint8_t value = cpu->Read8(cpu->GetPc());
+    cpu->AddPc(1);
+    cpu->Set8(Y_KIND, value);
+    cpu->UpdateNflg(value);
+    cpu->UpdateZflg(value);
+    return this->cycles;
+}
+
+int LdyImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+    uint8_t imm8 = cpu->Read8(cpu->GetPc());
+    cpu->AddPc(1);
+    *stop = false;
+    if(*code!=NULL){
+        //即値をXレジスタに格納する。
+        //NとZフラグの更新も行う予定
+        //y:bh
+        **code = 0xC6;//MOV RM8, IMM8, MOV BL, IMM
+        *code  = *code + 1;
+        **code = (uint8_t)this->SetRm8(0x03, 0x07, 0x00);
+        *code  = *code + 1;
+        **code = imm8;
+        *code  = *code + 1;
+        return 3;
+    }
+    return 3;
 }
