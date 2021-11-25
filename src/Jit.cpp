@@ -52,51 +52,72 @@ void Jit::Restore(REGISTER_KIND register_kind, uint8_t** code){
             *code  = *code + 1;
             this->Write((uint32_t)0, code);
             **code = 0x8D;//LEA R32, M
+            *code  = *code + 1;
             **code = 0xB2;   // reg : ESI, effective_addr:[EDX]+disp32
+            *code  = *code + 1;
             this->Write(&(this->cpu->gprs[A_KIND]), code);
             **code = 0x88; //MOV RM8, R8     MOV BYTE[ESI], AL
+            *code  = *code + 1;
             **code = 0x06; //reg : AL, effective_addr:[ESI]
+            *code  = *code + 1;
             break;
         case X_KIND:
             **code = (uint8_t)(0xB8+2);//MOV EDX, IMM32
             *code  = *code + 1;
             this->Write((uint32_t)0, code);
             **code = 0x8D;//LEA R32, M
+            *code  = *code + 1;
             **code = 0xB2;   // reg : ESI, effective_addr:[EDX]+disp32
+            *code  = *code + 1;
             this->Write(&(this->cpu->gprs[X_KIND]), code);
             **code = 0x88; //MOV RM8, R8     MOV BYTE[ESI], BL
+            *code  = *code + 1;
             **code = 0x1E; //reg : BL, effective_addr:[ESI]
+            *code  = *code + 1;
             break;
         case Y_KIND:
             **code = (uint8_t)(0xB8+2);//MOV EDX, IMM32
             *code  = *code + 1;
             this->Write((uint32_t)0, code);
             **code = 0x8D;//LEA R32, M
+            *code  = *code + 1;
             **code = 0xB2;   // reg : ESI, effective_addr:[EDX]+disp32
+            *code  = *code + 1;
             this->Write(&(this->cpu->gprs[Y_KIND]), code);
             **code = 0x88; //MOV RM8, R8     MOV BYTE[ESI], BH
+            *code  = *code + 1;
             **code = 0x3E; //reg : BH, effective_addr:[ESI]
+            *code  = *code + 1;
             break;
         case SP_KIND:
             **code = (uint8_t)(0xB8+2);//MOV EDX, IMM32
             *code  = *code + 1;
             this->Write((uint32_t)0, code);
             **code = 0x8D;//LEA R32, M
+            *code  = *code + 1;
             **code = 0xB2;   // reg : ESI, effective_addr:[EDX]+disp32
+            *code  = *code + 1;
             this->Write(&(this->cpu->gprs[SP_KIND]), code);
             **code = 0x88; //MOV RM8, R8     MOV BYTE[ESI], AH
+            *code  = *code + 1;
             **code = 0x26; //reg : AH, effective_addr:[ESI]
+            *code  = *code + 1;
             break;
         case PC_KIND:
             **code = (uint8_t)(0xB8+2);//MOV EDX, IMM32
             *code  = *code + 1;
             this->Write((uint32_t)0, code);
             **code = 0x8D;//LEA R32, M
+            *code  = *code + 1;
             **code = 0xB2;   // reg : ESI, effective_addr:[EDX]+disp32
+            *code  = *code + 1;
             this->Write(&(this->cpu->pc), code);
             **code = 0x66; //オペランドオーバーライド
+            *code  = *code + 1;
             **code = 0x89; //MOV RM16, R16     MOV WORD[ESI], DI
+            *code  = *code + 1;
             **code = 0x3E; //reg : DI, effective_addr:[ESI]
+            *code  = *code + 1;
             break;
         default:
             fprintf(stderr, "Not implemented: %d\n", register_kind);
@@ -119,6 +140,7 @@ uint8_t* Jit::CompileBlock(){
         size += this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
     }
     code = (uint8_t*)this->AllocCodeRegion(size+10000);
+    this->pc2code[first_pc] = code;
     first_loc = code;
     this->cpu->SetPc(first_pc);
     //再コンパイル
@@ -167,7 +189,11 @@ uint8_t* Jit::CompileBlock(){
         size += this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
     }
     //レジスタの値を復元
-
+    this->Restore(A_KIND, &code);
+    this->Restore(X_KIND, &code);
+    this->Restore(Y_KIND, &code);
+    this->Restore(SP_KIND, &code);
+    this->Restore(PC_KIND, &code);
     *code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
     code++;
     *code    = 0xC4;
@@ -190,4 +216,5 @@ void Jit::Run(){
     }
     void (*func)() = (void (*)()) code;
     func();
+    this->cpu->ShowSelf();
 }
