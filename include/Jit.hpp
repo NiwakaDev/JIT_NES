@@ -31,7 +31,7 @@ class Jit:public Object{
             }
         }
         void Restore(REGISTER_KIND register_kind);
-        void ToBinary(const char* file_name, uint16_t pc);//コード領域をバイナリファイルに保存する
+        void ToBinary(const char* file_name, uint16_t pc, int size);//コード領域をバイナリファイルに保存する
         uint8_t* CompileBlock();
         bool IsCompiledBlock(uint16_t pc);
 };

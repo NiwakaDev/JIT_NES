@@ -28,7 +28,6 @@
 ***/
 
 void WriteCall(Cpu* cpu){
-    //fprintf(stderr, "cpu->addr = %08X, cpu->data = %08X\n", cpu->addr, cpu->data);
     cpu->Write(cpu->addr, cpu->data);
 }
 
@@ -42,12 +41,12 @@ uint8_t ReadCall8(Cpu* cpu){
     }
     cnt++;
     ***/
+    //fprintf(stderr, "addr = 0x%04X, cpu->Read8(cpu->addr)=0x%02X at ReadCall8\n", cpu->addr, cpu->Read8(cpu->addr));
     return cpu->Read8(cpu->addr);
 }
 
 void Debug(uint32_t data){
     fprintf(stderr, "data = 0x%02X at Debug\n", (uint8_t)data);
-    exit(1);
 }
 
 /***
@@ -174,21 +173,67 @@ int LdaImmediate::Execute(Cpu* cpu){
 
 int LdaImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     uint8_t imm8;
+    imm8 = cpu->Read8(cpu->GetPc());
+    cpu->AddPc(1);
     *stop = false;
     if(*code!=NULL){
         //即値をAレジスタに格納
         //Aレジスタ:al
-        imm8 = cpu->Read8(cpu->GetPc());
-        cpu->AddPc(1);
         **code = 0xC6;//MOV RM8, IMM8, MOV AL, IMM8
         *code  = *code + 1;
         **code = (uint8_t)this->SetRm8(0x03, 0x00, 0x00);
         *code  = *code + 1;
         **code = imm8;
         *code  = *code + 1;
+
+        /***
+        //デバッグ
+        //書き込みは特別な関数を実行 
+        **code    = 0xB8+6;     //mov esi, imm32
+        *code  = *code + 1;
+        this->Write(Debug, code); //imm32=Debug
+
+        **code    = 0x83;        //sub rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xEC;
+        *code  = *code + 1;
+        **code    = 12;
+        *code  = *code + 1;
+
+        **code = 0x60;          //pushad
+        *code = *code + 1;
+
+        **code    = 0xFF;       //push eax
+        *code  = *code + 1;
+        **code  = this->SetRm8(0x03, 0x00, 0x06);
+        *code  = *code + 1;
+
+        **code    = 0xFF;       //call rm32
+        *code  = *code + 1;
+        **code    = 0xD6;       //rm32=esi
+        *code  = *code + 1;
+
+        //add esp, 4            
+        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xC4;
+        *code  = *code + 1;
+        **code    = 4;
+        *code  = *code + 1;
+
+        **code = 0x61;          //popad
+        *code = *code + 1;
+
+        //add esp, 4            
+        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xC4;
+        *code  = *code + 1;
+        **code    = 12;
+        *code  = *code + 1;
+        ***/
         return 3;
     }
-    cpu->AddPc(1);
     return 3;
 }
 
@@ -751,4 +796,36 @@ int Bne::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         return 24;
     }
     return 24;
+}
+
+JmpAbsolute::JmpAbsolute(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
+
+}
+
+int JmpAbsolute::Execute(Cpu* cpu){
+    uint16_t addr = cpu->Read16(cpu->GetPc());
+    cpu->SetPc(addr);
+    return this->cycles;
+}
+
+int JmpAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+    uint16_t addr = cpu->Read16(cpu->GetPc());
+    *stop = true;
+    if(*code!=NULL){
+        //DIにaddrを設定するだけ。
+        //MOV R32, IMM32 (R32=ESI, IMM32=&addr)
+        **code = 0xB8+6;
+        *code  = *code + 1;
+        this->Write(&addr, code);
+
+        //MOV R16, RM16  (R16=DI,  RM32 = [ESI])
+        **code = 0x66;
+        *code  = *code + 1;
+        **code = 0x8B;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x00, 0x06, 0x07);
+        *code  = *code + 1;
+        return 8;
+    }
+    return 8;
 }

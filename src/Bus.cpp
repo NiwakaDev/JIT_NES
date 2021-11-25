@@ -75,6 +75,7 @@ void Bus::Write8(uint16_t addr, uint8_t value){
         return;
     }  
     if(0x2000<=addr && addr<=0x2007){
+        fprintf(stderr, "読み込まれています");
         ppu_register_kind = (PPU_REGISTER_KIND)(addr-0x2000);
         this->ppu->Write(ppu_register_kind, value);
         return;

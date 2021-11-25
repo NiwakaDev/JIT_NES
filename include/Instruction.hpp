@@ -91,3 +91,10 @@ class Bne:public InstructionBase{
         int Execute(Cpu* cpu);
         int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
 };
+
+class JmpAbsolute:public InstructionBase{
+    public:
+        JmpAbsolute(string name, int nbytes, int cycles);
+        int Execute(Cpu* cpu);
+        int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
+};

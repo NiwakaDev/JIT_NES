@@ -22,6 +22,7 @@ Jit::Jit(Cpu* cpu, Bus* bus){
     for(int i=0; i<INSTRUCTION_SIZE; i++){
         this->instructions[i] = NULL;
     }
+    this->instructions[0x4C] = new JmpAbsolute("JmpAbsolute", 3, 3);
     this->instructions[0x78] = new Sei("Sei", 1, 2);
     this->instructions[0x88] = new Dey("Dey", 1, 2);
     this->instructions[0x8D] = new StaAbsolute("StaAbsolute", 3, 4);
@@ -231,7 +232,7 @@ uint8_t* Jit::CompileBlock(){
     code++;
     *code = this->SetRm8(0x00, 0x06, 0x07);
     code++;
-    
+
     while(!stop){
         uint8_t op_code = this->bus->Read8(this->cpu->GetPc());
         this->cpu->AddPc(1);
@@ -259,6 +260,12 @@ uint8_t* Jit::CompileBlock(){
     return first_loc;
 }
 
+void Jit::ToBinary(const char* file_name, uint16_t pc, int size){
+    FILE* fp = fopen(file_name, "wb+");
+    fwrite(this->pc2code[pc], 1, size, fp);
+    fclose(fp);
+}
+
 void Jit::Run(){
     uint8_t* code = NULL;
     if(this->IsCompiledBlock(this->cpu->GetPc())){
@@ -271,5 +278,8 @@ void Jit::Run(){
     void (*func)() = (void (*)()) code;
     func();
     //fprintf(stderr, "BLOCK実行後\n");
-    this->cpu->ShowSelf();
+    //this->cpu->ShowSelf();
 }
+
+//現在の課題
+//bneを適切にスルーできていない。
