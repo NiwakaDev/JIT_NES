@@ -107,6 +107,8 @@ uint8_t* Jit::CompileBlock(){
         }
         size += this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
     }
+    //レジスタの値を復元
+    
     *code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
     code++;
     *code    = 0xC4;
@@ -129,5 +131,4 @@ void Jit::Run(){
     }
     void (*func)() = (void (*)()) code;
     func();
-    exit(1);
 }

@@ -564,11 +564,88 @@ int Bne::Execute(Cpu* cpu){
 }
 
 int Bne::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+    uint16_t value = (int16_t)((int8_t)cpu->Read8(cpu->GetPc()));
+    cpu->AddPc(1);
     *stop = true;
     if(*code!=NULL){
-        this->Error("Not implemented: %s::CompileStep", this->name.c_str());
-        return 18;
+        //Zフラグ立っている時、即値をpcに代入
+        //立っていない時はスルー
+        //Zフラグを0bit目に持って行って、
+        //その値とvalueの掛け算をとる。
+        //Zフラグが1ならばvalueはそのままpcに加算
+        //Zフラグが0ならばpcに0が加算されるので、そのままpc
+        /***
+        struct{
+            unsigned C:1;
+            unsigned Z:1;
+            unsigned I:1;
+            unsigned D:1;
+            unsigned B:1;
+            unsigned R:1;
+            unsigned V:1;
+            unsigned N:1;
+        }flgs;
+        ***/
+        //Zフラグを0bit目に持ってくるには、右に1bitシフト
+        //空いてるレジスタはEDX, ESI
+        //MOV RM8, R8 (RM8=DL, R8=CL)
+        **code = 0x88;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x02, 0x01);
+        *code  = *code + 1;
+
+        //AND RM8, IMM8 (RM8=DL, IMM8=0x02)
+        **code = 0x80;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x02, 0x04);
+        *code  = *code + 1;
+        **code = 0x02;
+        *code  = *code + 1;
+
+        //DLを右に1bitずらす
+        //SHR RM8 (RM8=DL)
+        **code = 0xD0;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x02, 0x05);
+        *code  = *code + 1;
+
+        //DLを符号無し拡張し、SIに格納する
+        //MOVZX R16, RM8 (R16=SI, RM8=DL)
+        **code  = 0x66;
+        *code   = *code + 1;
+        **code  = 0x0F;
+        *code   = *code + 1;
+        **code  = 0xB6;
+        *code   = *code + 1;
+        **code  = this->SetRm8(0x03, 0x02, 0x06);
+        *code   = *code + 1;
+
+        //DXにvalueを格納する
+        **code  = 0x66;
+        *code   = *code + 1;
+        **code  = 0xB8+2;
+        *code   = *code + 1;
+        this->Write(value, code);
+        
+        //DXとSIを掛け算
+        //IMUL R16, RM32 (R16=DX, RM16=SI)
+        **code = 0x66;
+        *code = *code + 1;
+        **code = 0x0F;
+        *code = *code + 1;
+        **code = 0xAF;
+        *code = *code + 1;
+        **code = this->SetRm8(0x03, 0x06, 0x02);
+        *code = *code + 1;
+
+        //DXとPCを加算
+        //pc:di
+        //ADD RM16, R16 (RM16=DI, R16=DX)
+        **code = 0x01;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x07, 0x02);
+        *code  = *code + 1;
+        return 21;
     }
-    this->Error("Not implemented: %s::CompileStep", this->name.c_str());
-    return 18;
+    return 21;
 }
