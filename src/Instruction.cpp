@@ -813,19 +813,13 @@ int JmpAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     *stop = true;
     if(*code!=NULL){
         //DIにaddrを設定するだけ。
-        //MOV R32, IMM32 (R32=ESI, IMM32=&addr)
-        **code = 0xB8+6;
-        *code  = *code + 1;
-        this->Write(&addr, code);
-
-        //MOV R16, RM16  (R16=DI,  RM32 = [ESI])
+        //MOV R16, IMM16  (R16=DI,  IMM16 = addr)
         **code = 0x66;
         *code  = *code + 1;
-        **code = 0x8B;
+        **code = 0xB8+7;
         *code  = *code + 1;
-        **code = this->SetRm8(0x00, 0x06, 0x07);
-        *code  = *code + 1;
-        return 8;
+        this->Write(addr, code);
+        return 6;
     }
-    return 8;
+    return 6;
 }
