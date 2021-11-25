@@ -125,6 +125,12 @@ void Jit::Restore(REGISTER_KIND register_kind, uint8_t** code){
     }
 }
 
+uint8_t Jit::SetRm8(uint8_t mod, uint8_t rm, uint8_t reg_idx){
+    uint8_t modrm;
+    modrm = (mod<<6) | rm | (reg_idx<<3);
+    return modrm;
+}
+
 uint8_t* Jit::CompileBlock(){
     uint8_t* code = NULL;
     uint8_t* first_loc;
@@ -154,32 +160,78 @@ uint8_t* Jit::CompileBlock(){
     code++;
     stop = false;
 
-    *code = 0xB0;//MOV R8, IMM8
+    //ソースコードの問題点
+    //bneでジャンプするときにそれまでの状態を保持しておいて欲しいのに、ここで
+    //初期化される
+    //解決策、番地から値を読み取るようにすれば良い。
+    //つまり、MOV R8, IMM8ではなく、MOV R8, RM8を実行すること
+    //各手順の流れ：
+    //MOV ESI, CPUクラス内のレジスタの番地
+    //MOV R8, BYTE[ESI]を実行
+//acc:al
+//sp:ah
+//x:bl
+//y:bh
+//status:cl
+//pc:di
+    //MOV R32, RM32 (R32=ESI, RM32=&this->cpu->gprs[A_KIND])
+    *code = 0xB8+6;
     code++;
-    *code = this->cpu->GetGprValue(A_KIND);
+    this->Write(&(this->cpu->gprs[A_KIND]), &code);
+    //MOV R8, RM8 (R8=AL, RM8=[ESI])
+    *code = 0x8A;
     code++;
-    *code = 0xB0+4;//MOV R8, IMM8
+    *code = this->SetRm8(0x00, 0x06, 0x00);
     code++;
-    *code = this->cpu->GetGprValue(SP_KIND);
-    code++;
-    *code = 0xB0+3;//MOV R8, IMM8
-    code++;
-    *code = this->cpu->GetGprValue(X_KIND);
-    code++;
-    *code = 0xB0+7;//MOV R8, IMM8
-    code++;
-    *code = this->cpu->GetGprValue(Y_KIND);
-    code++;
-    *code = 0xB0+1;//MOV R8, IMM8
-    code++;
-    *code = this->cpu->GetP();
-    code++;
-    *code = 0x66;//MOV R16, IMM16
-    code++;
-    *code = 0xB8+7;//MOV R16, IMM16
-    code++;
-    this->Write(this->cpu->GetPc(), &code);
 
+    *code = 0xB8+6;
+    code++;
+    this->Write(&(this->cpu->gprs[SP_KIND]), &code);
+    //MOV R8, RM8 (R8=AH, RM8=[ESI])
+    *code = 0x8A;
+    code++;
+    *code = this->SetRm8(0x00, 0x06, 0x04);
+    code++;
+
+    *code = 0xB8+6;
+    code++;
+    this->Write(&(this->cpu->gprs[X_KIND]), &code);
+    //MOV R8, RM8 (R8=BL, RM8=[ESI])
+    *code = 0x8A;
+    code++;
+    *code = this->SetRm8(0x00, 0x06, 0x03);
+    code++;
+
+    *code = 0xB8+6;
+    code++;
+    this->Write(&(this->cpu->gprs[Y_KIND]), &code);
+    //MOV R8, RM8 (R8=BH, RM8=[ESI])
+    *code = 0x8A;
+    code++;
+    *code = this->SetRm8(0x00, 0x06, 0x07);
+    code++;
+
+    *code = 0xB8+6;
+    code++;
+    this->Write(&(this->cpu->P.raw), &code);
+    //MOV R8, RM8 (R8=CL, RM8=[ESI])
+    *code = 0x8A;
+    code++;
+    *code = this->SetRm8(0x00, 0x06, 0x01);
+    code++;
+
+
+    *code = 0xB8+6;
+    code++;
+    this->Write(&(this->cpu->pc), &code);
+    //MOV R16, RM16 (R16=DI, RM8=[ESI])
+    *code = 0x66;
+    code++;
+    *code = 0x8B;
+    code++;
+    *code = this->SetRm8(0x00, 0x06, 0x07);
+    code++;
+    
     while(!stop){
         uint8_t op_code = this->bus->Read8(this->cpu->GetPc());
         this->cpu->AddPc(1);
@@ -214,7 +266,10 @@ void Jit::Run(){
     }else{
         code = this->CompileBlock();
     }
+    //fprintf(stderr, "BLOCK実行前\n");
+    //this->cpu->ShowSelf();
     void (*func)() = (void (*)()) code;
     func();
+    //fprintf(stderr, "BLOCK実行後\n");
     this->cpu->ShowSelf();
 }

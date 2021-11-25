@@ -17,7 +17,8 @@ class Jit:public Object{
         Bus* bus;
         uint8_t* pc2code[MEM_SIZE_6502];
         InstructionBase* instructions[INSTRUCTION_SIZE];
-        void Restore(REGISTER_KIND register_kind, uint8_t** code);
+        void Restore(REGISTER_KIND register_kind, uint8_t** code);      
+        uint8_t SetRm8(uint8_t mod, uint8_t rm, uint8_t reg_idx);
     public:
         Jit(Cpu* cpu, Bus* bus);
         void Run();
@@ -30,7 +31,7 @@ class Jit:public Object{
             }
         }
         void Restore(REGISTER_KIND register_kind);
-        void ToBinary(const char* file_name);//コード領域をバイナリファイルに保存する
+        void ToBinary(const char* file_name, uint16_t pc);//コード領域をバイナリファイルに保存する
         uint8_t* CompileBlock();
         bool IsCompiledBlock(uint16_t pc);
 };

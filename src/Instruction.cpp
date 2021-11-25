@@ -33,13 +33,20 @@ void WriteCall(Cpu* cpu){
 }
 
 //とりあえず、READもこれを利用
-void ReadCall8(Cpu* cpu){
-    fprintf(stderr, "cpu->addr = %08X\n", cpu->addr);
-    //return cpu->Read8(cpu->addr);
+uint8_t ReadCall8(Cpu* cpu){
+    /***
+    static int cnt=0;
+    if(cnt==0){
+        fprintf(stderr, "addr = 0x%04X, cpu->Read8(cpu->addr)=0x%02X at ReadCall8\n", cpu->addr, cpu->Read8(cpu->addr));
+        exit(1);
+    }
+    cnt++;
+    ***/
+    return cpu->Read8(cpu->addr);
 }
 
 void Debug(uint32_t data){
-    fprintf(stderr, "data = 0x%04X\n", (uint16_t)data);
+    fprintf(stderr, "data = 0x%02X at Debug\n", (uint8_t)data);
     exit(1);
 }
 
@@ -418,6 +425,76 @@ int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         **code    = 4;
         *code  = *code + 1;
 
+        //popadで戻り値alが書き変わるので、退避用変数を用意する
+        //MOV R32, IMM32 (R32=ESI, IMM32=&cpu->temp)
+        **code = 0xB8+6;
+        *code  = *code + 1;
+        this->Write(&(cpu->temp), code);
+
+        //MOV RM8, R8 (RM8=[ESI], R8=al)
+        **code = 0x88;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x00, 0x06, 0x00);
+        *code  = *code + 1;
+
+        **code = 0x61;          //popad
+        *code = *code + 1;
+
+        //add esp, 12            
+        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xC4;
+        *code  = *code + 1;
+        **code    = 12;
+        *code  = *code + 1;
+
+        //alに値を戻す
+        //MOV R32, IMM32 (R32=ESI, IMM32=&cpu->temp)
+        **code = 0xB8+6;
+        *code  = *code + 1;
+        this->Write(&(cpu->temp), code);
+
+        //MOV R8, RM8 (R8=AL, RM8=[ESI])
+        **code  = 0x8A;
+        *code  = *code + 1;
+        **code  = this->SetRm8(0x00, 0x06, 0x00);
+        *code = *code + 1;
+
+        /***
+        //デバッグ
+        //書き込みは特別な関数を実行 
+        **code    = 0xB8+6;     //mov esi, imm32
+        *code  = *code + 1;
+        this->Write(Debug, code); //imm32=Debug
+
+        **code    = 0x83;        //sub rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xEC;
+        *code  = *code + 1;
+        **code    = 12;
+        *code  = *code + 1;
+
+        **code = 0x60;          //pushad
+        *code = *code + 1;
+
+        **code    = 0xFF;       //push eax
+        *code  = *code + 1;
+        **code  = this->SetRm8(0x03, 0x00, 0x06);
+        *code  = *code + 1;
+
+        **code    = 0xFF;       //call rm32
+        *code  = *code + 1;
+        **code    = 0xD6;       //rm32=esi
+        *code  = *code + 1;
+
+        //add esp, 4            
+        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
+        *code  = *code + 1;
+        **code    = 0xC4;
+        *code  = *code + 1;
+        **code    = 4;
+        *code  = *code + 1;
+
         **code = 0x61;          //popad
         *code = *code + 1;
 
@@ -428,6 +505,7 @@ int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code    = 12;
         *code  = *code + 1;
+        ***/
         return 33;
     }
     return 33;
@@ -669,6 +747,7 @@ int Bne::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code = this->SetRm8(0x03, 0x07, 0x02);
         *code  = *code + 1;
+
         return 24;
     }
     return 24;

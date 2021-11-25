@@ -17,6 +17,10 @@ class Cpu:public Object{
         int now_cycle = 0;
         int instruction_size = INSTRUCTION_SIZE;
         InstructionBase* instructions[INSTRUCTION_SIZE];
+        Bus* bus;
+        vector<string> instruction_log;
+    public:
+        uint8_t gprs[REGISTER_KIND_CNT];
         union{
             uint8_t raw;
             struct{
@@ -30,10 +34,6 @@ class Cpu:public Object{
                 unsigned N:1;
             }flgs;
         }P;
-        Bus* bus;
-        vector<string> instruction_log;
-    public:
-        uint8_t gprs[REGISTER_KIND_CNT];
         uint16_t pc;
         Cpu(Bus* bus);
         int Execute();
@@ -87,4 +87,5 @@ class Cpu:public Object{
         //以下の2変数は、StaZeropage::CompileStepで起こるバグに対する応急措置
         uint16_t addr;
         uint8_t  data;
+        uint8_t  temp;
 };
