@@ -53,7 +53,7 @@ void Emulator::Execute(){
     uint32_t offset;
     const uint32_t DELAY = 16;
     this->cpu->Reset();
-    for(int i=0; i<1000; i++){
+    while(!flg){
         cycle = 0;
         //JITコンパイラでは、割り込み処理を未実装
         if(this->dma->IsRunning()){

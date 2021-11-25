@@ -669,49 +669,6 @@ int Bne::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code = this->SetRm8(0x03, 0x07, 0x02);
         *code  = *code + 1;
-
-        //書き込みは特別な関数を実行 
-        **code    = 0xB8+6;     //mov esi, imm32
-        *code  = *code + 1;
-        this->Write(ReadCall8, code); //imm32=Debug
-
-        **code    = 0x83;        //sub rm32, imm8 (rm32=esp, imm8=12)
-        *code  = *code + 1;
-        **code    = 0xEC;
-        *code  = *code + 1;
-        **code    = 12;
-        *code  = *code + 1;
-
-        **code = 0x60;          //pushad
-        *code = *code + 1;
-
-        **code    = 0x68;       //push imm32
-        *code  = *code + 1;
-        this->Write(cpu, code); //imm32=cpu
-
-        **code    = 0xFF;       //call rm32
-        *code  = *code + 1;
-        **code    = 0xD6;       //rm32=esi
-        *code  = *code + 1;
-
-        //add esp, 4            
-        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
-        *code  = *code + 1;
-        **code    = 0xC4;
-        *code  = *code + 1;
-        **code    = 4;
-        *code  = *code + 1;
-
-        **code = 0x61;          //popad
-        *code = *code + 1;
-
-        //add esp, 4            
-        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
-        *code  = *code + 1;
-        **code    = 0xC4;
-        *code  = *code + 1;
-        **code    = 12;
-        *code  = *code + 1;
         return 24;
     }
     return 24;
