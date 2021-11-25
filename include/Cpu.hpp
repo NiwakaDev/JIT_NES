@@ -17,8 +17,6 @@ class Cpu:public Object{
         int now_cycle = 0;
         int instruction_size = INSTRUCTION_SIZE;
         InstructionBase* instructions[INSTRUCTION_SIZE];
-        uint8_t gprs[REGISTER_KIND_CNT];
-        uint16_t pc;
         union{
             uint8_t raw;
             struct{
@@ -35,6 +33,8 @@ class Cpu:public Object{
         Bus* bus;
         vector<string> instruction_log;
     public:
+        uint8_t gprs[REGISTER_KIND_CNT];
+        uint16_t pc;
         Cpu(Bus* bus);
         int Execute();
         void SetI();

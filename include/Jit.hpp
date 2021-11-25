@@ -17,6 +17,7 @@ class Jit:public Object{
         Bus* bus;
         uint8_t* pc2code[MEM_SIZE_6502];
         InstructionBase* instructions[INSTRUCTION_SIZE];
+        void Restore(REGISTER_KIND register_kind, uint8_t** code);
     public:
         Jit(Cpu* cpu, Bus* bus);
         void Run();
