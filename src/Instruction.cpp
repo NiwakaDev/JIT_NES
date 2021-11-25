@@ -223,7 +223,7 @@ int StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         //MOV R32, IMM32 (R32=ESI, IMM32=&cpu->data)
         **code    = 0xB8+6;     //mov esi, imm32
         *code  = *code + 1;
-        this->Write(&(cpu->data), code); //imm32=Function
+        this->Write(&(cpu->data), code); //imm32=&cpu->data
 
         //MOV rm8, r8  (rm8=[ESI], r8=al)
         **code = 0x88;
@@ -266,7 +266,7 @@ int StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         **code = 0x61;          //popad
         *code = *code + 1;
 
-        //add esp, 4            pushしたcpuを捨てる
+        //add esp, 12            ESPを元の位置に戻す
         **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
         *code  = *code + 1;
         **code    = 0xC4;
@@ -341,7 +341,7 @@ int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     uint16_t addr = cpu->Read16(cpu->GetPc());
     cpu->AddPc(2);
     cpu->addr = addr;
-    *stop = true;
+    *stop = false;
     if(*code!=NULL){
         //即値2byteをaddrとx_valueを加算した値が示す番地の中身から、1バイトをAレジスタにロードする。
         //Aレジスタ:al
@@ -371,7 +371,7 @@ int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code = *code + 1;
         **code = this->SetRm8(0x00, 0x06, 0x00);
         *code = *code + 1;
-        this->Write(addr, code);//cpu->addrの値をaddrに更新
+        this->Write(addr, code);
 
         //ADD RM16, R16  (RM16=[ESI], DX)
         **code = 0x66;
@@ -426,4 +426,125 @@ int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         return 33;
     }
     return 33;
+}
+
+Inx::Inx(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
+
+}
+
+int Inx::Execute(Cpu* cpu){
+    uint8_t value = cpu->GetGprValue(X_KIND)+1;
+    cpu->Set8(X_KIND, value);
+    cpu->UpdateNflg(value);
+    cpu->UpdateZflg(value); 
+    return this->cycles;
+}
+
+int Inx::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+    *stop = false;
+    if(*code!=NULL){
+        //Xレジスタの値を1プラスする
+        //x:bl
+        //ADD RM8, 1 (RM8=BL)
+        **code = 0x80;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x03, 0x00);
+        *code  = *code + 1;
+        **code = 0x01;
+        *code  = *code + 1;
+        return 3;
+    }
+    return 3;
+}
+
+Dey::Dey(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
+
+}
+
+int Dey::Execute(Cpu* cpu){
+    uint8_t value = cpu->GetGprValue(Y_KIND)-1;
+    cpu->Set8(Y_KIND, value);
+    cpu->UpdateNflg(value);
+    cpu->UpdateZflg(value);
+    return this->cycles; 
+}
+
+int Dey::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+    *stop = true;
+    if(*code!=NULL){
+        //Yレジスタの値を1引く
+        //y:bh
+        //status:cl
+        //空いてるレジスタはEDX, ESI
+
+        //SUB RM8, 1 (RM8=bh)
+        **code = 0x80;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x07, 0x05);
+        *code  = *code + 1;
+        **code = 0x01;
+        *code  = *code + 1;
+    
+        //SETZ RM8 (RM8=DL)
+        **code = 0x0F;
+        *code  = *code + 1;
+        **code = 0x94;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x02, 0x00);
+        *code  = *code + 1;
+
+        //SETS RM8 (RM8=DH)
+        **code = 0x0F;
+        *code  = *code + 1;
+        **code = 0x98;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x06, 0x00);
+        *code  = *code + 1;
+
+        //status:CL
+        /***
+        struct{
+            unsigned C:1;
+            unsigned Z:1;
+            unsigned I:1;
+            unsigned D:1;
+            unsigned B:1;
+            unsigned R:1;
+            unsigned V:1;
+            unsigned N:1;
+        }flgs;
+        ***/
+        //Z : 1ビット目(0から数えて)
+        //N : 7ビット目(0から数えて)
+
+        //DLを左に1bitずらす。
+        //SAL RM8 (RM8=DL)
+        **code = 0xD0;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x02, 0x04);
+        *code  = *code + 1;
+
+        //DHを左に7bitずらす
+        //SAL RM8, IMM8 (RM8=DH, IMM8=7)
+        **code = 0xC0;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x06, 0x04);
+        *code  = *code + 1;
+        **code = 0x07;
+        *code  = *code + 1;
+
+        //OR RM8, R8 (RM8=CL, R8=DL)
+        **code = 0x08;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x01, 0x02);
+        *code  = *code + 1;
+
+        //OR RM8, R8 (RM8=CL, R8=DH)
+        **code = 0x08;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x01, 0x06);
+        *code  = *code + 1;
+        return 9;
+    }
+    return 9;
 }
