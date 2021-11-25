@@ -623,6 +623,16 @@ int Bne::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         **code = this->SetRm8(0x03, 0x02, 0x05);
         *code  = *code + 1;
 
+        //BNEはZフラグた立っていないときにジャンプするので、DLを反転させる。
+        //XOR DL, 0x01  DL=0x01の時、DLは0に。DL=0x00の時、DLは0x01に。
+        //XOR RM8, IMM8 (RM8=DL, IMM8)
+        **code = 0x80;
+        *code  = *code + 1;
+        **code = this->SetRm8(0x03, 0x02, 0x06);
+        *code  = *code + 1;
+        **code = 0x01;
+        *code  = *code + 1;
+
         //DLを符号無し拡張し、SIに格納する
         //MOVZX R16, RM8 (R16=SI, RM8=DL)
         **code  = 0x66;
@@ -660,12 +670,10 @@ int Bne::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         **code = this->SetRm8(0x03, 0x07, 0x02);
         *code  = *code + 1;
 
-        
-
         //書き込みは特別な関数を実行 
         **code    = 0xB8+6;     //mov esi, imm32
         *code  = *code + 1;
-        this->Write(Debug, code); //imm32=Debug
+        this->Write(ReadCall8, code); //imm32=Debug
 
         **code    = 0x83;        //sub rm32, imm8 (rm32=esp, imm8=12)
         *code  = *code + 1;
@@ -677,10 +685,9 @@ int Bne::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         **code = 0x60;          //pushad
         *code = *code + 1;
 
-        **code    = 0xFF;       //push EDX
+        **code    = 0x68;       //push imm32
         *code  = *code + 1;
-        **code    = this->SetRm8(0x03, 0x07, 0x06);
-        *code  = *code + 1;
+        this->Write(cpu, code); //imm32=cpu
 
         **code    = 0xFF;       //call rm32
         *code  = *code + 1;
