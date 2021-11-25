@@ -470,7 +470,7 @@ int Dey::Execute(Cpu* cpu){
 }
 
 int Dey::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
-    *stop = true;
+    *stop = false;
     if(*code!=NULL){
         //Yレジスタの値を1引く
         //y:bh
@@ -544,7 +544,31 @@ int Dey::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code = this->SetRm8(0x03, 0x01, 0x06);
         *code  = *code + 1;
-        return 9;
+        return 18;
     }
-    return 9;
+    return 18;
+}
+
+Bne::Bne(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
+
+}
+
+int Bne::Execute(Cpu* cpu){
+    uint16_t value = (int16_t)((int8_t)cpu->Read8(cpu->GetPc()));
+    cpu->AddPc(1);
+    if(!cpu->IsZflg()){
+        cpu->AddPc(value);
+        return this->cycles  + 1;
+    }
+    return this->cycles;
+}
+
+int Bne::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+    *stop = true;
+    if(*code!=NULL){
+        this->Error("Not implemented: %s::CompileStep", this->name.c_str());
+        return 18;
+    }
+    this->Error("Not implemented: %s::CompileStep", this->name.c_str());
+    return 18;
 }

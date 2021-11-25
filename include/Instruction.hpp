@@ -84,3 +84,10 @@ class Dey:public InstructionBase{
         int Execute(Cpu* cpu);
         int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
 };
+
+class Bne:public InstructionBase{
+    public:
+        Bne(string name, int nbytes, int cycles);
+        int Execute(Cpu* cpu);
+        int CompileStep(uint8_t** code, bool* stop, Cpu* cpu);
+};
