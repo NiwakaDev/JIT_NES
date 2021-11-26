@@ -82,8 +82,10 @@ int Sei::Execute(Cpu* cpu){
     return this->cycles;
 }
 
-int Sei::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+CompileStepInfo* Sei::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     *stop = false;
+    this->compile_step_info.size   = 3;
+    this->compile_step_info.cycles = this->cycles;
     if(*code!=NULL){
         //status:cl
         //OR CL, 0x04
@@ -93,9 +95,9 @@ int Sei::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code = (uint8_t)0x04;
         *code  = *code + 1;
-        return 3;
+        return &(this->compile_step_info);
     }
-    return 3;
+    return &(this->compile_step_info);
 }
 
 LdxImmediate::LdxImmediate(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
@@ -111,9 +113,11 @@ int LdxImmediate::Execute(Cpu* cpu){
     return this->cycles;
 }
 
-int LdxImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+CompileStepInfo* LdxImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     uint8_t imm8;
     *stop = false;
+    this->compile_step_info.size   = 3;
+    this->compile_step_info.cycles = this->cycles;
     if(*code!=NULL){
         //即値をXレジスタに格納する。
         //NとZフラグの更新も行う
@@ -126,10 +130,10 @@ int LdxImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code = imm8;
         *code  = *code + 1;
-        return 3;
+        return &(this->compile_step_info);
     }
     cpu->AddPc(1);
-    return 3;
+    return &(this->compile_step_info);
 }
 
 Txs::Txs(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
@@ -142,8 +146,10 @@ int Txs::Execute(Cpu* cpu){
     return this->cycles;
 }
 
-int Txs::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+CompileStepInfo* Txs::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     *stop = false;
+    this->compile_step_info.size   = 2;
+    this->compile_step_info.cycles = this->cycles;
     if(*code!=NULL){
         //sp:ah
         //x:bl
@@ -153,9 +159,9 @@ int Txs::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code = this->SetRm8(0x03, 0x03, 0x04);
         *code  = *code + 1;
-        return 2;
+        return &(this->compile_step_info);
     }
-    return 2;
+    return &(this->compile_step_info);
 }
 
 LdaImmediate::LdaImmediate(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
@@ -171,11 +177,13 @@ int LdaImmediate::Execute(Cpu* cpu){
     return this->cycles;
 }
 
-int LdaImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+CompileStepInfo* LdaImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     uint8_t imm8;
     imm8 = cpu->Read8(cpu->GetPc());
     cpu->AddPc(1);
     *stop = false;
+    this->compile_step_info.size   = 3;
+    this->compile_step_info.cycles = this->cycles;
     if(*code!=NULL){
         //即値をAレジスタに格納
         //Aレジスタ:al
@@ -185,56 +193,9 @@ int LdaImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code = imm8;
         *code  = *code + 1;
-
-        /***
-        //デバッグ
-        //書き込みは特別な関数を実行 
-        **code    = 0xB8+6;     //mov esi, imm32
-        *code  = *code + 1;
-        this->Write(Debug, code); //imm32=Debug
-
-        **code    = 0x83;        //sub rm32, imm8 (rm32=esp, imm8=12)
-        *code  = *code + 1;
-        **code    = 0xEC;
-        *code  = *code + 1;
-        **code    = 12;
-        *code  = *code + 1;
-
-        **code = 0x60;          //pushad
-        *code = *code + 1;
-
-        **code    = 0xFF;       //push eax
-        *code  = *code + 1;
-        **code  = this->SetRm8(0x03, 0x00, 0x06);
-        *code  = *code + 1;
-
-        **code    = 0xFF;       //call rm32
-        *code  = *code + 1;
-        **code    = 0xD6;       //rm32=esi
-        *code  = *code + 1;
-
-        //add esp, 4            
-        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
-        *code  = *code + 1;
-        **code    = 0xC4;
-        *code  = *code + 1;
-        **code    = 4;
-        *code  = *code + 1;
-
-        **code = 0x61;          //popad
-        *code = *code + 1;
-
-        //add esp, 4            
-        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
-        *code  = *code + 1;
-        **code    = 0xC4;
-        *code  = *code + 1;
-        **code    = 12;
-        *code  = *code + 1;
-        ***/
-        return 3;
+        return &(this->compile_step_info);
     }
-    return 3;
+    return &(this->compile_step_info);
 }
 
 StaAbsolute::StaAbsolute(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
@@ -250,11 +211,13 @@ int StaAbsolute::Execute(Cpu* cpu){
     return this->cycles;
 }
 
-int StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+CompileStepInfo* StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     uint16_t addr = cpu->Read16(cpu->GetPc());
     cpu->addr = addr;
     cpu->AddPc(2);
     *stop = false;
+    this->compile_step_info.size   = 42;
+    this->compile_step_info.cycles = this->cycles;
     if(*code!=NULL){
         //メモリにAレジスタの値を格納する
         //Aレジスタ:al
@@ -331,9 +294,9 @@ int StaAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         **code    = 12;
         *code  = *code + 1;
 
-        return 9+8+10+7+12;
+        return &(this->compile_step_info);
     }
-    return 9+8+10+7+12;
+    return &(this->compile_step_info);
 }
 
 LdyImmediate::LdyImmediate(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
@@ -349,10 +312,12 @@ int LdyImmediate::Execute(Cpu* cpu){
     return this->cycles;
 }
 
-int LdyImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+CompileStepInfo* LdyImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     uint8_t imm8 = cpu->Read8(cpu->GetPc());
     cpu->AddPc(1);
     *stop = false;
+    this->compile_step_info.size   = 3;
+    this->compile_step_info.cycles = this->cycles;
     if(*code!=NULL){
         //即値をXレジスタに格納する。
         //NとZフラグの更新も行う予定
@@ -363,9 +328,9 @@ int LdyImmediate::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code = imm8;
         *code  = *code + 1;
-        return 3;
+        return &(this->compile_step_info);
     }
-    return 3;
+    return &(this->compile_step_info);
 }
 
 LdaAbsoluteX::LdaAbsoluteX(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
@@ -394,11 +359,13 @@ int LdaAbsoluteX::Execute(Cpu* cpu){
     return this->cycles+cycle;
 }
 
-int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+CompileStepInfo* LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     uint16_t addr = cpu->Read16(cpu->GetPc());
     cpu->AddPc(2);
     cpu->addr = addr;
     *stop = false;
+    this->compile_step_info.size   = 56;
+    this->compile_step_info.cycles = this->cycles;
     if(*code!=NULL){
         //即値2byteをaddrとx_valueを加算した値が示す番地の中身から、1バイトをAレジスタにロードする。
         //Aレジスタ:al
@@ -504,56 +471,9 @@ int LdaAbsoluteX::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code  = this->SetRm8(0x00, 0x06, 0x00);
         *code = *code + 1;
-
-        /***
-        //デバッグ
-        //書き込みは特別な関数を実行 
-        **code    = 0xB8+6;     //mov esi, imm32
-        *code  = *code + 1;
-        this->Write(Debug, code); //imm32=Debug
-
-        **code    = 0x83;        //sub rm32, imm8 (rm32=esp, imm8=12)
-        *code  = *code + 1;
-        **code    = 0xEC;
-        *code  = *code + 1;
-        **code    = 12;
-        *code  = *code + 1;
-
-        **code = 0x60;          //pushad
-        *code = *code + 1;
-
-        **code    = 0xFF;       //push eax
-        *code  = *code + 1;
-        **code  = this->SetRm8(0x03, 0x00, 0x06);
-        *code  = *code + 1;
-
-        **code    = 0xFF;       //call rm32
-        *code  = *code + 1;
-        **code    = 0xD6;       //rm32=esi
-        *code  = *code + 1;
-
-        //add esp, 4            
-        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
-        *code  = *code + 1;
-        **code    = 0xC4;
-        *code  = *code + 1;
-        **code    = 4;
-        *code  = *code + 1;
-
-        **code = 0x61;          //popad
-        *code = *code + 1;
-
-        //add esp, 4            
-        **code    = 0x83;        //add rm32, imm8 (rm32=esp, imm8=12)
-        *code  = *code + 1;
-        **code    = 0xC4;
-        *code  = *code + 1;
-        **code    = 12;
-        *code  = *code + 1;
-        ***/
-        return 33;
+        return &(this->compile_step_info);
     }
-    return 33;
+    return &(this->compile_step_info);
 }
 
 Inx::Inx(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
@@ -568,8 +488,10 @@ int Inx::Execute(Cpu* cpu){
     return this->cycles;
 }
 
-int Inx::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+CompileStepInfo* Inx::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     *stop = false;
+    this->compile_step_info.size   = 3;
+    this->compile_step_info.cycles = this->cycles;
     if(*code!=NULL){
         //Xレジスタの値を1プラスする
         //x:bl
@@ -580,9 +502,9 @@ int Inx::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code = 0x01;
         *code  = *code + 1;
-        return 3;
+        return &(this->compile_step_info);
     }
-    return 3;
+    return &(this->compile_step_info);
 }
 
 Dey::Dey(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
@@ -597,8 +519,10 @@ int Dey::Execute(Cpu* cpu){
     return this->cycles; 
 }
 
-int Dey::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+CompileStepInfo* Dey::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     *stop = false;
+    this->compile_step_info.size   = 18;
+    this->compile_step_info.cycles = this->cycles;
     if(*code!=NULL){
         //Yレジスタの値を1引く
         //y:bh
@@ -672,9 +596,9 @@ int Dey::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         *code  = *code + 1;
         **code = this->SetRm8(0x03, 0x01, 0x06);
         *code  = *code + 1;
-        return 18;
+        return &(this->compile_step_info);
     }
-    return 18;
+    return &(this->compile_step_info);
 }
 
 Bne::Bne(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
@@ -691,11 +615,13 @@ int Bne::Execute(Cpu* cpu){
     return this->cycles;
 }
 
-int Bne::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+CompileStepInfo* Bne::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     uint16_t value = (int16_t)((int8_t)cpu->Read8(cpu->GetPc()));
     cpu->AddPc(1);
     uint16_t current_pc = cpu->GetPc();
     *stop = true;
+    this->compile_step_info.size   = 32;
+    this->compile_step_info.cycles = this->cycles;
     if(*code!=NULL){
         //Zフラグ立っている時、即値をpcに代入
         //立っていない時はスルー
@@ -793,9 +719,9 @@ int Bne::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         **code = this->SetRm8(0x03, 0x07, 0x02);
         *code  = *code + 1;
 
-        return 24;
+        return &(this->compile_step_info);
     }
-    return 24;
+    return &(this->compile_step_info);
 }
 
 JmpAbsolute::JmpAbsolute(string name, int nbytes, int cycles):InstructionBase(name, nbytes, cycles){
@@ -808,9 +734,11 @@ int JmpAbsolute::Execute(Cpu* cpu){
     return this->cycles;
 }
 
-int JmpAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
+CompileStepInfo* JmpAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
     uint16_t addr = cpu->Read16(cpu->GetPc());
     *stop = true;
+    this->compile_step_info.size   = 6;
+    this->compile_step_info.cycles = this->cycles;
     if(*code!=NULL){
         //DIにaddrを設定するだけ。
         //MOV R16, IMM16  (R16=DI,  IMM16 = addr)
@@ -819,7 +747,7 @@ int JmpAbsolute::CompileStep(uint8_t** code, bool* stop, Cpu* cpu){
         **code = 0xB8+7;
         *code  = *code + 1;
         this->Write(addr, code);
-        return 6;
+        return &(this->compile_step_info);
     }
-    return 6;
+    return &(this->compile_step_info);
 }

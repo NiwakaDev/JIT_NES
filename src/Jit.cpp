@@ -135,13 +135,17 @@ uint8_t* Jit::CompileBlock(){
     uint16_t first_pc = this->cpu->GetPc();
     bool stop = false;
     int size = 0;
+    int cycles;
+    CompileStepInfo* compile_step_info;
     while(!stop){
         uint8_t op_code = this->bus->Read8(this->cpu->GetPc());
         this->cpu->AddPc(1);
         if(this->instructions[op_code]==NULL){
             this->Error("Not implemented: 0x%02X at Jit::CompileBlock", op_code);
         }
-        size += this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
+        compile_step_info = this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
+        size   = size + compile_step_info->size;
+        cycles = cycles + compile_step_info->cycles;
     }
     code = (uint8_t*)this->AllocCodeRegion(size+10000);
     this->pc2code[first_pc] = code;
@@ -158,11 +162,6 @@ uint8_t* Jit::CompileBlock(){
     code++;
     stop = false;
 
-    //ソースコードの問題点
-    //bneでジャンプするときにそれまでの状態を保持しておいて欲しいのに、ここで
-    //初期化される
-    //解決策、番地から値を読み取るようにすれば良い。
-    //つまり、MOV R8, IMM8ではなく、MOV R8, RM8を実行すること
     //各手順の流れ：
     //MOV ESI, CPUクラス内のレジスタの番地
     //MOV R8, BYTE[ESI]を実行
@@ -236,7 +235,7 @@ uint8_t* Jit::CompileBlock(){
         if(this->instructions[op_code]==NULL){
             this->Error("Not implemented: 0x%02X at Jit::CompileBlock", op_code);
         }
-        size += this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
+        this->instructions[op_code]->CompileStep(&code, &stop, this->cpu);
     }
     //レジスタの値を復元
     this->Restore(A_KIND, &code);
