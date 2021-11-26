@@ -33,9 +33,6 @@ Jit::Jit(Cpu* cpu, Bus* bus){
     this->instructions[0xBD] = new LdaAbsoluteX("LdaAbsoluteX", 3, 4);
     this->instructions[0xD0] = new Bne("Bne", 2, 2);
     this->instructions[0xE8] = new Inx("Inx", 1, 2);
-    /***
-    this->instructions[0x85] = new StaZeropage("StaZeropage", 2, 3);
-    ***/
 }
 
 void* Jit::AllocCodeRegion(int size){
@@ -169,12 +166,12 @@ uint8_t* Jit::CompileBlock(){
     //各手順の流れ：
     //MOV ESI, CPUクラス内のレジスタの番地
     //MOV R8, BYTE[ESI]を実行
-//acc:al
-//sp:ah
-//x:bl
-//y:bh
-//status:cl
-//pc:di
+    //acc:al
+    //sp:ah
+    //x:bl
+    //y:bh
+    //status:cl
+    //pc:di
     //MOV R32, RM32 (R32=ESI, RM32=&this->cpu->gprs[A_KIND])
     *code = 0xB8+6;
     code++;
@@ -266,20 +263,16 @@ void Jit::ToBinary(const char* file_name, uint16_t pc, int size){
     fclose(fp);
 }
 
-void Jit::Run(){
+int Jit::Run(){
+    struct CompileBlockInfo block_info;
     uint8_t* code = NULL;
     if(this->IsCompiledBlock(this->cpu->GetPc())){
         code = this->pc2code[this->cpu->GetPc()];
     }else{
         code = this->CompileBlock();
     }
-    //fprintf(stderr, "BLOCK実行前\n");
-    //this->cpu->ShowSelf();
+    block_info.code = code;
     void (*func)() = (void (*)()) code;
     func();
-    //fprintf(stderr, "BLOCK実行後\n");
-    //this->cpu->ShowSelf();
+    return 30;//とりあえず30サイクル返すようにする
 }
-
-//現在の課題
-//bneを適切にスルーできていない。

@@ -10,6 +10,11 @@ class Bus;
 
 #define INSTRUCTION_SIZE 256
 
+struct CompileBlockInfo{
+    uint8_t* code;
+    int total_cycles;
+};
+
 class Jit:public Object{
     private:
         uint8_t* code = NULL;
@@ -21,7 +26,7 @@ class Jit:public Object{
         uint8_t SetRm8(uint8_t mod, uint8_t rm, uint8_t reg_idx);
     public:
         Jit(Cpu* cpu, Bus* bus);
-        void Run();
+        int Run();
         void* AllocCodeRegion(int size);
         template<typename type>void Write(type data, uint8_t** code){
             uint8_t* pointer = (uint8_t*)&data;

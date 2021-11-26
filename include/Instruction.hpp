@@ -2,6 +2,12 @@
 #include "common.hpp"
 using namespace std;
 class Cpu;
+
+struct CompileStepInfo{
+    int size;
+    int cycles;
+};
+
 class InstructionBase:public Object{
     protected:
         int nbytes;
@@ -14,6 +20,7 @@ class InstructionBase:public Object{
                 *code  = *code + 1;
             }
         }
+        struct CompileStepInfo compile_step_info;
     public:
         string name;
         InstructionBase(string name, int nbytes, int cycles);
